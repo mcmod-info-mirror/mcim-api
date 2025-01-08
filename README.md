@@ -50,7 +50,7 @@ MCIM 几乎完美兼容官方的 API 结构，可以直接替换 URL，方便迁
 
 ## OpenMCIM
 
-和 [OpenBMCLAPI](https://github.com/bangbang93/openbmclapi) 需要节点分发文件，**急需节点加入 orz ！**，见 [OpenMCIM 文件分发相关 #91](https://github.com/mcmod-info-mirror/mcim/issues/91)
+和 [OpenBMCLAPI](https://github.com/bangbang93/openbmclapi) 需要节点分发文件，**急需节点加入 orz ！** 见 [OpenMCIM 文件分发相关 #91](https://github.com/mcmod-info-mirror/mcim/issues/91)
 
 对于启动器开发者，OpenMCIM 不会缓存**除 Mod 外**的整合包、资源包、材质包、地图等，以及文件大小大于 **20MB** 的文件，Curseforge 的类型限制为 `classId=6`，该限制会被可能根据需求更改。
 
