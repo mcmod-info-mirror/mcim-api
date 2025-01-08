@@ -137,7 +137,7 @@ MCIM 100% 兼容官方的 API 结构，可以直接替换，方便迁移，可�
 
 - Email: z0z0r4@outlook.com
 - QQ: 3531890582
-
+- QQ 群聊 [OpenMCIM](https://qm.qq.com/q/ZSN6ilHEwC)
 ### 声明
 
 MCIM 是一个镜像服务平台，旨在为中国大陆用户提供稳定的 Mod 信息镜像服务。为维护 Mod 创作者及源站平台的合法权益，MCIM 制定以下协议及处理方式：
