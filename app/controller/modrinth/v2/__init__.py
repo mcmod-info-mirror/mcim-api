@@ -5,7 +5,6 @@ from pydantic import BaseModel, Field
 from odmantic import query
 import json
 import time
-import re
 from datetime import datetime
 
 from app.sync import *
@@ -20,7 +19,6 @@ from app.config.mcim import MCIMConfig
 from app.utils.response import (
     TrustableResponse,
     UncachedResponse,
-    ForceSyncResponse,
     BaseResponse,
 )
 from app.utils.network import request as request_async
@@ -207,7 +205,7 @@ async def modrinth_search_projects(
 ):
     res = (
         await request_async(
-            f"{API}/search",
+            f"{API}/v2/search",
             params={
                 "query": query,
                 "facets": facets,

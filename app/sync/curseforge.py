@@ -1,25 +1,16 @@
 from typing import List, Optional, Union
-# from dramatiq import actor
-# import dramatiq
-import httpx
-import json
-import os
-import time
-from datetime import datetime
 from odmantic import query
+import json
+import time
+
 
 from app.sync import sync_mongo_engine as mongodb_engine
 from app.sync import sync_redis_engine as redis_engine
-# from app.sync import (
-#     CURSEFORGE_LIMITER,
-# )
 from app.models.database.curseforge import File, Mod, Pagination, Fingerprint
 from app.models.database.file_cdn import File as FileCDN
 from app.utils.network import request_sync
 from app.config import MCIMConfig
 from app.utils.loger import log
-from app.exceptions import ResponseCodeException
-
 
 mcim_config = MCIMConfig.load()
 
@@ -38,35 +29,8 @@ def submit_models(models: List[Union[File, Mod, Fingerprint]]):
         log.debug(f"Submited: {len(models)}")
 
 
-# def should_retry(retries_so_far, exception):
-#     return retries_so_far < 3 and (
-#         isinstance(exception, httpx.TransportError)
-#         or isinstance(exception, dramatiq.RateLimitExceeded)
-#         or isinstance(exception, dramatiq.middleware.time_limit.TimeLimitExceeded)
-#     )
-
-
-# limit decorator
-# def limit(func):
-#     def wrapper(*args, **kwargs):
-#         with CURSEFORGE_LIMITER.acquire():
-#             return func(*args, **kwargs)
-
-#     return wrapper
-
-
-# @actor(
-#     max_retries=3,
-#     retry_when=should_retry,
-#     throws=(ResponseCodeException,),
-#     min_backoff=1000 * 60,
-#     actor_name="cf_check_alive",
-
-# )
-# @limit
 def check_alive():
     return request_sync(API, headers=HEADERS).text
-
 
 
 def append_model_from_files_res(
@@ -104,11 +68,6 @@ def append_model_from_files_res(
                         url=file_model.downloadUrl,
                         path=file_model.sha1,
                         size=file_model.fileLength,
-                        # mtime=(
-                        #     file_model.fileDate
-                        #     if file_model.fileDate
-                        #     else datetime.now()
-                        # ),
                         mtime=int(time.time()),
                     )
                 )
@@ -146,9 +105,6 @@ def sync_mod_all_files(
         params=params,
     ).json()
 
-    # models.extend(
-    #     append_model_from_files_res(res, latestFiles, need_to_cache=need_to_cache)
-    # )
     models = append_model_from_files_res(res, latestFiles, need_to_cache=need_to_cache)
     submit_models(models=models)
     log.info(
@@ -172,6 +128,7 @@ def sync_mod_all_files(
         )
     log.info(f'Finished modid:{modId} with {res["pagination"]["totalCount"]} files')
 
+
 def sync_multi_mods_all_files(modIds: List[int]):
     # 去重
     modIds = list(set(modIds))
@@ -189,15 +146,6 @@ def sync_multi_mods_all_files(modIds: List[int]):
         sync_mod_all_files(modId, verify_expire=True)
 
 
-# @actor(
-#     max_retries=3,
-#     retry_when=should_retry,
-#     throws=(ResponseCodeException,),
-#     min_backoff=1000 * 60,
-#     actor_name="sync_mod",
-
-# )
-# @limit
 def sync_mod(modId: int):
     models: List[Union[File, Mod]] = []
     res = request_sync(f"{API}/v1/mods/{modId}", headers=HEADERS).json()["data"]
@@ -218,15 +166,6 @@ def sync_mod(modId: int):
     submit_models(models)
 
 
-# @actor(
-#     max_retries=3,
-#     retry_when=should_retry,
-#     throws=(ResponseCodeException,),
-#     min_backoff=1000 * 60,
-#     actor_name="sync_mutil_mods",
-
-# )
-# @limit
 def sync_mutil_mods(modIds: List[int]):
     modIds = list(set(modIds))
     data = {"modIds": modIds}
@@ -244,73 +183,22 @@ def sync_mutil_mods(modIds: List[int]):
             if mods_dateReleased_index[mod["id"]] == mod["dateReleased"]:
                 log.debug(f"Mod {mod['id']} is not updated, pass!")
                 modIds.remove(mod["id"])
-            
+
     sync_multi_mods_all_files([model.id for model in models])
     submit_models(models)
 
-# @actor(
-#     max_retries=3,
-#     retry_when=should_retry,
-#     throws=(ResponseCodeException,),
-#     min_backoff=1000 * 60,
-#     actor_name="sync_file",
 
-# )
-# @limit
-def sync_file(modId: int, fileId: int, expire: bool = False):
-    # res = request_sync(f"{API}/v1/mods/{modId}/files/{fileId}", headers=headers).json()[
-    #     "data"
-    # ]
-    # latestFiles = request_sync(f"{API}/v1/mods/{modId}", headers=HEADERS).json()[
-    #     "data"
-    # ]["latestFiles"]
-    # models = [
-    #     File(found=True, **res),
-    #     Fingerprint(
-    #         found=True, id=res["fileFingerprint"], file=res, latestFiles=latestFiles
-    #     ),
-    # ]
-    # 下面会拉取所有文件，不重复添加
-    # models = []
-    # if not expire:
-    # models.extend(sync_mod_all_files(modId, latestFiles=latestFiles))
-    # models.extend()
-    # submit_models(models)
-    sync_mod(modId)
-
-
-# @actor(
-#     max_retries=3,
-#     retry_when=should_retry,
-#     throws=(ResponseCodeException,),
-#     min_backoff=1000 * 60,
-#     actor_name="sync_mutil_files",
-# )
-# @limit
 def sync_mutil_files(fileIds: List[int]):
-    # models: List[Union[File, Mod]] = []
     res = request_sync(
         method="POST",
         url=f"{API}/v1/mods/files",
         headers=HEADERS,
         json={"fileIds": fileIds},
     ).json()["data"]
-    # for file in res:
-    # models.append(File(found=True, **file))
     modids = [file["modId"] for file in res if file["gameId"] == 432]
     sync_multi_mods_all_files(modids)
-    # submit_models(models)
 
 
-# @actor(
-#     max_retries=3,
-#     retry_when=should_retry,
-#     throws=(ResponseCodeException,),
-#     min_backoff=1000 * 60,
-#     actor_name="sync_fingerprints",
-
-# )
-# @limit
 def sync_fingerprints(fingerprints: List[int]):
     res = request_sync(
         method="POST",
@@ -318,30 +206,14 @@ def sync_fingerprints(fingerprints: List[int]):
         headers=HEADERS,
         json={"fingerprints": fingerprints},
     ).json()
-    # models: List[Fingerprint] = []
-    # for file in res["data"]["exactMatches"]:
-    # models.append(
-    #     Fingerprint(
-    #         id=file["file"]["fileFingerprint"],
-    #         file=file["file"],
-    #         latestFiles=file["latestFiles"],
-    #         found=True,
-    #     )
-    # )
-    modids = [file["file"]["modId"] for file in res["data"]["exactMatches"] if file["file"]["gameId"] == 432]
+    modids = [
+        file["file"]["modId"]
+        for file in res["data"]["exactMatches"]
+        if file["file"]["gameId"] == 432
+    ]
     sync_multi_mods_all_files(modids)
-    # submit_models(models)
 
 
-# @actor(
-#     max_retries=3,
-#     retry_when=should_retry,
-#     throws=(ResponseCodeException,),
-#     min_backoff=1000 * 60,
-#     actor_name="sync_categories",
-
-# )
-# @limit
 def sync_categories():
     res = request_sync(
         f"{API}/v1/categories", headers=HEADERS, params={"gameId": "432"}
