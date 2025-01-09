@@ -28,7 +28,7 @@ MCIM 几乎完美兼容官方的 API 结构，可以直接替换 URL，方便迁
 
 ### Modrinth
 
-- `api.modrinth.com` or `staging-api.modrinth.com` -> `mod.mcimirror.top/modrinth`
+- `api.modrinth.com` -> `mod.mcimirror.top/modrinth`
 - `cdn.modrinth.com` -> `mod.mcimirror.top`
 
 ### Curseforge
