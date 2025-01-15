@@ -200,6 +200,7 @@ class File(Model):
 
     model_config = {
         "collection": "curseforge_files",
+        "title": "CurseForge File",
     }
 
 
@@ -287,6 +288,7 @@ class Mod(Model):
 
     model_config = {
         "collection": "curseforge_mods",
+        "title": "CurseForge Mod",
     }
 
 
@@ -310,4 +312,5 @@ class Fingerprint(Model):
 
     model_config = {
         "collection": "curseforge_fingerprints",
+        "title": "CurseForge Fingerprint",
     }

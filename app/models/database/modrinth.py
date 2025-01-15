@@ -64,7 +64,10 @@ class Project(Model):
 
     model_config = {
         "collection": "modrinth_projects",
+        "title": "Modrinth Project"
     }
+
+
 
 class Dependencies(BaseModel):
     version_id: Optional[str] = None
@@ -94,7 +97,8 @@ class File(Model):
 
     sync_at: datetime = Field(default_factory=datetime.utcnow)
 
-    model_config = {"collection": "modrinth_files"}
+    model_config = {"collection": "modrinth_files", 
+                    "title": "Modrinth File"}
 
 class FileInfo(BaseModel):
     hashes: Hashes
@@ -126,4 +130,5 @@ class Version(Model):
 
     sync_at: datetime = Field(default_factory=datetime.utcnow)
 
-    model_config = {"collection": "modrinth_versions"}
+    model_config = {"collection": "modrinth_versions", 
+                    "title": "Modrinth Version"}
