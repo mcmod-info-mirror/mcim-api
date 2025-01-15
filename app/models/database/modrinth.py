@@ -15,11 +15,11 @@ class License(BaseModel):
     url: Optional[str] = None
 
 class GalleryItem(BaseModel):
-    url: Optional[str] = None
-    featured: Optional[bool] = None
+    url: str
+    featured: bool
     title: Optional[str] = None
     description: Optional[str] = None
-    created: Optional[str] = None
+    created: datetime
     ordering: Optional[int] = None
 
 class Project(Model):
@@ -45,14 +45,13 @@ class Project(Model):
     color: Optional[int] = None
     thread_id: Optional[str] = None
     monetization_status: Optional[str] = None
-    team: Optional[str] = None
+    team: str
     body_url: Optional[str] = None
-    # moderator_message: Optional[str] = None Deprecated
-    published: Optional[str] = None
-    updated: Optional[str] = None
-    approved: Optional[str] = None
-    queued: Optional[str] = None
-    followers: Optional[int] = None
+    published: datetime
+    updated: datetime
+    approved: Optional[datetime] = None
+    queued: Optional[datetime] = None
+    followers: int
     license: Optional[License] = None
     versions: Optional[List[str]] = None
     game_versions: Optional[List[str]] = None
@@ -60,23 +59,18 @@ class Project(Model):
     gallery: Optional[List[GalleryItem]] = None
 
     translated_description: Optional[str] = None
-    found: bool = Field(default=True)
+
     sync_at: datetime = Field(default_factory=datetime.utcnow)
 
     model_config = {
         "collection": "modrinth_projects",
     }
 
-    @field_serializer("sync_at")
-    def serialize_sync_Date(self, value: datetime, _info):
-        return value.strftime("%Y-%m-%dT%H:%M:%SZ")
-    
-
 class Dependencies(BaseModel):
     version_id: Optional[str] = None
     project_id: Optional[str] = None
     file_name: Optional[str] = None
-    dependency_type: Optional[str] = None
+    dependency_type: str
 
 
 class Hashes(EmbeddedModel):
@@ -87,36 +81,32 @@ class Hashes(EmbeddedModel):
 # TODO: Add Version reference directly but not query File again
 class File(Model):
     hashes: Hashes = Field(primary_field=True)
-    url: Optional[str] = None
-    filename: Optional[str] = None
-    primary: Optional[bool] = None
-    size: Optional[int] = None
+    url: str
+    filename: str
+    primary: bool
+    size: int
     file_type: Optional[str] = None
 
     version_id: Optional[str] #  = Field(index=True)  # 有可能没有该 file...
     project_id: Optional[str] #  = Field(index=True)
 
     file_cdn_cached: Optional[bool] = False
-    found: Optional[bool] = True
+
     sync_at: datetime = Field(default_factory=datetime.utcnow)
 
     model_config = {"collection": "modrinth_files"}
 
-    @field_serializer("sync_at")
-    def serialize_sync_Date(self, value: datetime, _info):
-        return value.strftime("%Y-%m-%dT%H:%M:%SZ")
-
 class FileInfo(BaseModel):
     hashes: Hashes
-    url: Optional[str] = None
-    filename: Optional[str] = None
-    primary: Optional[bool] = None
-    size: Optional[int]
-    file_type: Optional[str]
+    url: str
+    filename: str
+    primary: bool
+    size: int
+    file_type: Optional[str] = None
 
 class Version(Model):
     id: str = Field(primary_field=True, index=True)
-    project_id: Optional[str] = Field(index=True)
+    project_id: str = Field(index=True)
     slug: Optional[str] = None
     name: Optional[str] = None
     version_number: Optional[str] = None
@@ -128,24 +118,12 @@ class Version(Model):
     featured: Optional[bool] = None
     status: Optional[str] = None
     requested_status: Optional[str] = None
-    author_id: Optional[str] = None
-    date_published: Optional[datetime] = None #  = Field(index=True)
-    downloads: Optional[int] = None
+    author_id: str
+    date_published: datetime
+    downloads: int
     changelog_url: Optional[str] = None  # Deprecated
-    files: Optional[List[FileInfo]] = None
+    files: List[FileInfo]
 
-    found: bool = True
     sync_at: datetime = Field(default_factory=datetime.utcnow)
 
     model_config = {"collection": "modrinth_versions"}
-
-    @field_serializer("sync_at", "date_published")
-    def serialize_sync_date(self, value: datetime, _info):
-        return value.strftime("%Y-%m-%dT%H:%M:%SZ")
-
-    @field_validator("date_published")
-    @classmethod
-    def format_date(cls, v: Union[str, datetime]) -> datetime:
-        if isinstance(v, str):
-            return datetime.strptime(v, "%Y-%m-%dT%H:%M:%S.%fZ")
-        return v

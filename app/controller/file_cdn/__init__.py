@@ -117,7 +117,6 @@ if mcim_config.file_cdn:
                 mrFile.project_id == project_id,
                 mrFile.version_id == version_id,
                 mrFile.filename == file_name,
-                mrFile.found == True,
             ),
         )
         if file:
@@ -180,7 +179,7 @@ if mcim_config.file_cdn:
         file: Optional[cfFile] = await request.app.state.aio_mongo_engine.find_one(
             cfFile,
             query.and_(
-                cfFile.id == fileid, cfFile.fileName == file_name, cfFile.found == True
+                cfFile.id == fileid, cfFile.fileName == file_name
             ),
         )
         if file:  # 数据库中有文件
