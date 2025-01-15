@@ -9,6 +9,7 @@ from datetime import datetime
 
 from app.sync import *
 from app.models.database.modrinth import Project, Version, File
+from app.models.response.modrinth import SearchResponse
 from app.sync.modrinth import async_tags
 from app.sync_queue.modrinth import (
     add_modrinth_project_ids_to_queue,
@@ -76,8 +77,6 @@ async def modrinth_project(request: Request, idslug: str):
         await add_modrinth_project_ids_to_queue(project_ids=[idslug])
         log.debug(f"Project {idslug} not found, add to queue.")
         return UncachedResponse()
-    elif model.found == False:
-        return UncachedResponse()
     return TrustableResponse(content=model.model_dump(), trustable=trustable)
 
 
@@ -97,7 +96,6 @@ async def modrinth_projects(ids: str, request: Request):
             query.or_(
                 query.in_(Project.id, ids_list), query.in_(Project.slug, ids_list)
             ),
-            Project.found == True,
         ),
     )
     models_count = len(models)
@@ -192,7 +190,7 @@ class SearchIndex(str, Enum):
 @v2_router.get(
     "/search",
     description="Modrinth Projects 搜索",
-    # TODO: response_model
+    response_model=SearchResponse,
 )
 @cache(expire=mcim_config.expire_second.modrinth.search)
 async def modrinth_search_projects(
@@ -239,8 +237,6 @@ async def modrinth_version(
         await add_modrinth_version_ids_to_queue(version_ids=[version_id])
         log.debug(f"Version {version_id} not found, add to queue.")
         return UncachedResponse()
-    elif model.found == False:
-        return UncachedResponse()
     return TrustableResponse(content=model.model_dump(), trustable=trustable)
 
 
@@ -254,7 +250,7 @@ async def modrinth_versions(ids: str, request: Request):
     trustable = True
     ids_list = json.loads(ids)
     models: List[Version] = await request.app.state.aio_mongo_engine.find(
-        Version, query.and_(query.in_(Version.id, ids_list), Version.found == True)
+        Version, query.and_(query.in_(Version.id, ids_list))
     )
     models_count = len(models)
     ids_count = len(ids_list)
@@ -303,12 +299,10 @@ async def modrinth_file(
         await add_modrinth_hashes_to_queue([hash_], algorithm=algorithm.value)
         log.debug(f"File {hash_} not found, add to queue.")
         return UncachedResponse()
-    elif file.found == False:
-        return UncachedResponse()
 
     # get version object
     version: Optional[Version] = await request.app.state.aio_mongo_engine.find_one(
-        Version, query.and_(Version.id == file.version_id, Version.found == True)
+        Version, query.and_(Version.id == file.version_id)
     )
     if version is None:
         await add_modrinth_version_ids_to_queue(version_ids=[file.version_id])
@@ -340,7 +334,6 @@ async def modrinth_files(items: HashesQuery, request: Request):
                 if items.algorithm == Algorithm.sha1
                 else query.in_(File.hashes.sha512, items.hashes)
             ),
-            File.found == True,
         ),
     )
     model_count = len(files_models)
@@ -428,7 +421,7 @@ async def modrinth_file_update(
     files_collection = request.app.state.aio_mongo_engine.get_collection(File)
     pipeline = [
         (
-            {"$match": {"_id.sha1": hash_, "found": True}}
+            {"$match": {"_id.sha1": hash_}}
             if algorithm is Algorithm.sha1
             else {"$match": {"_id.sha512": hash_}}
         ),
@@ -489,7 +482,7 @@ async def modrinth_mutil_file_update(request: Request, items: MultiUpdateItems):
     files_collection = request.app.state.aio_mongo_engine.get_collection(File)
     pipeline = [
         (
-            {"$match": {"_id.sha1": {"$in": items.hashes}, "found": True}}
+            {"$match": {"_id.sha1": {"$in": items.hashes}}}
             if items.algorithm is Algorithm.sha1
             else {"$match": {"_id.sha512": {"$in": items.hashes}}}
         ),

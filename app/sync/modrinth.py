@@ -77,21 +77,21 @@ def sync_project_all_version(
                 res = request_sync(f"{API}/v2/project/{project_id}").json()
             except ResponseCodeException as e:
                 if e.status_code == 404:
-                    models.append(Project(found=False, id=project_id, slug=project_id))
+                    models.append(Project(id=project_id, slug=project_id))
                     return
             slug = res["slug"]
     try:
         res = request_sync(f"{API}/v2/project/{project_id}/version").json()
     except ResponseCodeException as e:
         if e.status_code == 404:
-            models.append(Project(found=False, id=project_id, slug=project_id))
+            models.append(Project(id=project_id, slug=project_id))
             return
     version_count = len(res)
     for version in res:
         for file in version["files"]:
             file["version_id"] = version["id"]
             file["project_id"] = version["project_id"]
-            file_model = File(found=True, slug=slug, **file)
+            file_model = File(slug=slug, **file)
             if (
                 file_model.size <= MAX_LENGTH
                 and file_model.filename
@@ -111,7 +111,7 @@ def sync_project_all_version(
             if len(models) >= 100:
                 submit_models(models)
                 models = []
-        models.append(Version(found=True, slug=slug, **version))
+        models.append(Version(slug=slug, **version))
     submit_models(models)
     log.info(f"Synced project {project_id} {slug} with {version_count} versions")
 
@@ -144,18 +144,18 @@ def sync_project(project_id: str):
     models = []
     try:
         res = request_sync(f"{API}/v2/project/{project_id}").json()
-        models.append(Project(found=True, **res))
+        models.append(Project(**res))
         db_project = mongodb_engine.find_one(Project, Project.id == project_id)
         if db_project is not None:
             # check updated
             if db_project.updated != res["updated"]:
-                models.append(Project(found=True, **res))
+                models.append(Project(**res))
                 sync_project_all_version(project_id, slug=res["slug"])
             else:
                 return
     except ResponseCodeException as e:
         if e.status_code == 404:
-            models = [Project(found=False, id=project_id, slug=project_id)]
+            models = [Project(id=project_id, slug=project_id)]
     submit_models(models)
 
 
@@ -168,7 +168,7 @@ def sync_multi_projects(project_ids: List[str]):
         if e.status_code == 404:
             models = []
             for project_id in project_ids:
-                models.append(Project(found=False, id=project_id, slug=project_id))
+                models.append(Project(id=project_id, slug=project_id))
             submit_models(models)
             return
     db_projects = mongodb_engine.find(Project, query.in_(Project.id, project_ids))
@@ -185,7 +185,7 @@ def sync_multi_projects(project_ids: List[str]):
     slugs = {}
     for project_res in res:
         slugs[project_res["id"]] = project_res["slug"]
-        models.append(Project(found=True, **project_res))
+        models.append(Project(**project_res))
     sync_multi_projects_all_version(project_ids, slugs=slugs)
     submit_models(models)
 
@@ -195,8 +195,8 @@ def process_version_resp(res: dict) -> List[Union[Project, File, Version]]:
     for file in res["files"]:
         file["version_id"] = res["id"]
         file["project_id"] = res["project_id"]
-        models.append(File(found=True, **file))
-    models.append(Version(found=True, **res))
+        models.append(File(**file))
+    models.append(Version(**res))
     return models
 
 
@@ -205,7 +205,7 @@ def sync_version(version_id: str):
         res = request_sync(f"{API}/v2/version/{version_id}").json()
     except ResponseCodeException as e:
         if e.status_code == 404:
-            # models = [Version(found=False, id=version_id)]
+            # models = [Version(id=version_id)]
             # submit_models(models)
             return
     sync_project_all_version(res["project_id"])
@@ -217,8 +217,8 @@ def process_multi_versions(res: List[dict]):
         for file in version["files"]:
             file["version_id"] = version["id"]
             file["project_id"] = res["project_id"]
-            models.append(File(found=True, **file))
-        models.append(Version(found=True, **version))
+            models.append(File(**file))
+        models.append(Version(**version))
     return models
 
 
@@ -231,7 +231,7 @@ def sync_multi_versions(version_ids: List[str]):
         if e.status_code == 404:
             models = []
             for version_id in version_ids:
-                models.append(Version(found=False, id=version_id))
+                models.append(Version(id=version_id))
             submit_models(models)
             return
     project_ids = list(set([version["project_id"] for version in res]))  # 去重
@@ -245,7 +245,7 @@ def sync_hash(hash: str, algorithm: str):
         ).json()
     except ResponseCodeException as e:
         # if e.status_code == 404:
-        #     models = [File(found=False, hash=hash)]
+        #     models = [File(hash=hash)]
         #     submit_models(models)
         #     return
         return
@@ -258,8 +258,8 @@ def process_multi_hashes(res: dict):
         for file in version["files"]:
             file["version_id"] = version["id"]
             file["project_id"] = version["project_id"]
-            models.append(File(found=True, **file))
-        models.append(Version(found=True, **version))
+            models.append(File(**file))
+        models.append(Version(**version))
     return models
 
 
@@ -274,7 +274,7 @@ def sync_multi_hashes(hashes: List[str], algorithm: str):
         # if e.status_code == 404:
         #     models = []
         #     for hash in hashes:
-        #         models.append(File(found=False, hash=hash))
+        #         models.append(File(hash=hash))
         #     submit_models(models)
         return
 

@@ -43,14 +43,13 @@ def append_model_from_files_res(
                 file["sha1"] = _hash["value"]
             elif _hash["algo"] == 2:
                 file["md5"] = _hash["value"]
-        file_model = File(found=True, need_to_cache=need_to_cache, **file)
+        file_model = File(need_to_cache=need_to_cache, **file)
         models.append(file_model)
         models.append(
             Fingerprint(
                 id=file["fileFingerprint"],
                 file=file,
                 latestFiles=latestFiles,
-                found=True,
             )
         )
         # for file_cdn
@@ -152,7 +151,7 @@ def sync_mod(modId: int):
     if not res["gameId"] == 432:
         log.debug(f"Mod {modId} is not belong to Minecraft, pass!")
         return
-    models.append(Mod(found=True, **res))
+    models.append(Mod(**res))
     mod = mongodb_engine.find_one(Mod, Mod.id == modId)
     if mod is not None:
         if mod.dateReleased == models[0].dateReleased:
@@ -178,7 +177,7 @@ def sync_mutil_mods(modIds: List[int]):
     for mod in res:
         if mod["gameId"] != 432:
             log.debug(f"Mod {mod['id']} is not belong to Minecraft, pass!")
-        models.append(Mod(found=True, **mod))
+        models.append(Mod(**mod))
         if mods_dateReleased_index.get(mod["id"]) is not None:
             if mods_dateReleased_index[mod["id"]] == mod["dateReleased"]:
                 log.debug(f"Mod {mod['id']} is not updated, pass!")
