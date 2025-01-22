@@ -57,7 +57,8 @@ def cache(expire: Optional[int] = 60, never_expire: Optional[bool] = False):
 
             if value is not None:
                 value = orjson.loads(value)
-                log.debug(f"Cached response: [{key}]")
+                # log.debug(f"Cached response: [{key}]")
+                log.trace(f"Cached response: [{key}]")
                 REDIS_CACHE_HIT_GAUGE.labels(f'{func.__module__}:{func.__name__}').inc()
                 return ResponseBuilder.decode(value)
 
