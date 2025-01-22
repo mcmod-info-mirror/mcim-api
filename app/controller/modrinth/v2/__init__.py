@@ -282,7 +282,9 @@ class Algorithm(str, Enum):
 @cache(expire=mcim_config.expire_second.modrinth.file)
 async def modrinth_file(
     request: Request,
-    hash_: Annotated[str, Path(alias="hash", pattern=r"[a-zA-Z0-9]{40}|[a-zA-Z0-9]{128}")],
+    hash_: Annotated[
+        str, Path(alias="hash", pattern=r"[a-zA-Z0-9]{40}|[a-zA-Z0-9]{128}")
+    ],
     algorithm: Optional[Algorithm] = Algorithm.sha1,
 ):
     trustable = True
@@ -391,15 +393,15 @@ async def modrinth_files(items: HashesQuery, request: Request):
                 f"Versions {not_found_version_ids} {len(not_found_version_ids)}/{file_model_count} not completely found, add to queue."
             )
             trustable = False
-    result = {}
-    for version in version_models:
-        result[
-            (
-                version.files[0].hashes.sha1
-                if items.algorithm == Algorithm.sha1
-                else version.files[0].hashes.sha2
-            )
-        ] = version.model_dump()
+
+    result = {
+        (
+            version.files[0].hashes.sha1
+            if items.algorithm == Algorithm.sha1
+            else version.files[0].hashes.sha2
+        ): version.model_dump()
+        for version in version_models
+    }
 
     return TrustableResponse(content=result, trustable=trustable)
 
@@ -414,7 +416,9 @@ class UpdateItems(BaseModel):
 async def modrinth_file_update(
     request: Request,
     items: UpdateItems,
-    hash_: Annotated[str, Path(alias="hash", pattern=r"[a-zA-Z0-9]{40}|[a-zA-Z0-9]{128}")],
+    hash_: Annotated[
+        str, Path(alias="hash", pattern=r"[a-zA-Z0-9]{40}|[a-zA-Z0-9]{128}")
+    ],
     algorithm: Optional[Algorithm] = Algorithm.sha1,
 ):
     trustable = True
@@ -453,14 +457,15 @@ async def modrinth_file_update(
     version_result = await files_collection.aggregate(pipeline).to_list(length=None)
     if len(version_result) != 0:
         version_result = version_result[0]
-        if not (
-            datetime.strptime(
-                version_result["sync_at"], "%Y-%m-%dT%H:%M:%SZ"
-            ).timestamp()
-            + mcim_config.expire_second.modrinth.file
-            > time.time()
-        ):
-            trustable = False
+        # # version 不检查过期
+        # if trustable and not (
+        #     datetime.strptime(
+        #         version_result["sync_at"], "%Y-%m-%dT%H:%M:%SZ"
+        #     ).timestamp()
+        #     + mcim_config.expire_second.modrinth.file
+        #     > time.time()
+        # ):
+        #     trustable = False
     else:
         await add_modrinth_hashes_to_queue([hash_], algorithm=algorithm.value)
         log.debug(f"Hash {hash_} not found, add to queue.")
@@ -520,39 +525,40 @@ async def modrinth_mutil_file_update(request: Request, items: MultiUpdateItems):
         },
     ]
     versions_result = await files_collection.aggregate(pipeline).to_list(length=None)
+
     if len(versions_result) == 0:
         await add_modrinth_hashes_to_queue(
             items.hashes, algorithm=items.algorithm.value
         )
-        log.debug(f"Hashes {items.hashes} not found, add to queue.")
+        log.debug(f"Hashes {items.hashes} not found, send sync task")
         return UncachedResponse()
-    elif len(versions_result) != len(items.hashes):
-        # 找出未找到的文件
-        not_found_hashes = list(
-            set(items.hashes) - set([version["_id"] for version in versions_result])
+
+    not_found_hashes = list(
+        set(items.hashes) - set([version["_id"] for version in versions_result])
+    )
+    if not_found_hashes:
+        await add_modrinth_hashes_to_queue(
+            not_found_hashes, algorithm=items.algorithm.value
         )
-        if not_found_hashes:
-            await add_modrinth_hashes_to_queue(
-                not_found_hashes, algorithm=items.algorithm.value
-            )
-            log.debug(f"Hashes {not_found_hashes} not completely found, add to queue.")
-            trustable = False
-    else:
-        # check expire
-        resp = {}
-        for version_result in versions_result:
-            original_hash = version_result["_id"]
-            version_detail = version_result["detail"]
-            resp[original_hash] = version_detail
-            if not (
-                datetime.strptime(
-                    version_detail["sync_at"], "%Y-%m-%dT%H:%M:%SZ"
-                ).timestamp()
-                + mcim_config.expire_second.modrinth.file
-                > time.time()
-            ):
-                trustable = False
-        return TrustableResponse(content=resp, trustable=trustable)
+        log.debug(f"Hashes {not_found_hashes} not completely found, add to queue.")
+        trustable = False
+
+    resp = {}
+    for version_result in versions_result:
+        original_hash = version_result["_id"]
+        version_detail = version_result["detail"]
+        resp[original_hash] = version_detail
+        # # version 不检查过期
+        # if trustable and not (
+        #     datetime.strptime(
+        #         version_detail["sync_at"], "%Y-%m-%dT%H:%M:%SZ"
+        #     ).timestamp()
+        #     + mcim_config.expire_second.modrinth.file
+        #     > time.time()
+        # ):
+        #     trustable = False
+
+    return TrustableResponse(content=resp, trustable=trustable)
 
 
 @v2_router.get(
