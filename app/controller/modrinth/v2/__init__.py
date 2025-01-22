@@ -463,7 +463,7 @@ async def modrinth_file_update(
             trustable = False
     else:
         await add_modrinth_hashes_to_queue([hash_], algorithm=algorithm.value)
-        log.debug(f"Hash {hash_} not found, send sync task")
+        log.debug(f"Hash {hash_} not found, add to queue.")
         return UncachedResponse()
     return TrustableResponse(content=version_result, trustable=trustable)
 
@@ -524,7 +524,7 @@ async def modrinth_mutil_file_update(request: Request, items: MultiUpdateItems):
         await add_modrinth_hashes_to_queue(
             items.hashes, algorithm=items.algorithm.value
         )
-        log.debug(f"Hashes {items.hashes} not found, send sync task")
+        log.debug(f"Hashes {items.hashes} not found, add to queue.")
         return UncachedResponse()
     elif len(versions_result) != len(items.hashes):
         # 找出未找到的文件
