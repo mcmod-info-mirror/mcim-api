@@ -57,7 +57,8 @@ def cache(expire: Optional[int] = 60, never_expire: Optional[bool] = False):
 
             if value is not None:
                 value = orjson.loads(value)
-                log.debug(f"Cached response: [{key}]")
+                # log.debug(f"Cached response: [{key}]")
+                log.trace(f"Cached response: [{key}]")
                 REDIS_CACHE_HIT_GAUGE.labels(f'{func.__module__}:{func.__name__}').inc()
                 return ResponseBuilder.decode(value)
 
@@ -79,7 +80,8 @@ def cache(expire: Optional[int] = 60, never_expire: Optional[bool] = False):
                 await Cache.backend.set(key, value)
             else:
                 await Cache.backend.set(key, value, ex=expire)
-            log.debug(f"Set cache: [{key}]")
+            # log.debug(f"Set cache: [{key}]")
+            log.trace(f"Set cache: [{key}]")
 
             return result
 

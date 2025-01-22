@@ -137,7 +137,7 @@ if mcim_config.file_cdn:
         else:
             # 文件信息不存在
             await add_modrinth_project_ids_to_queue(project_ids=[project_id])
-            log.debug(f"sync project {project_id} task send.")
+            log.debug(f"Project {project_id} add to queue.")
 
         return return_origin_response()
 
@@ -209,7 +209,7 @@ if mcim_config.file_cdn:
         else:
             if fileid >= 530000:
                 await add_curseforge_fileIds_to_queue(fileIds=[fileid])
-                log.debug(f"sync fileId {fileid} task send.")
+                log.debug(f"FileId {fileid} add to queue.")
 
         return return_origin_response()
 
