@@ -77,7 +77,7 @@ class Dependencies(BaseModel):
 
 
 class Hashes(EmbeddedModel):
-    sha512: str
+    sha512: str = Field(index=True)
     sha1: str = Field(index=True)
 
 
