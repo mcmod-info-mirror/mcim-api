@@ -27,8 +27,8 @@ RETRY_TIMES = 3
 REQUEST_LOG = True
 
 
-httpx_async_client: httpx.AsyncClient = httpx.AsyncClient(proxies=PROXY)
-httpx_sync_client: httpx.Client = httpx.Client(proxies=PROXY)
+httpx_async_client: httpx.AsyncClient = httpx.AsyncClient(proxy=PROXY)
+httpx_sync_client: httpx.Client = httpx.Client(proxy=PROXY)
 
 
 def get_session() -> httpx.Client:
