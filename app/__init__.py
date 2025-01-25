@@ -47,7 +47,8 @@ APP = FastAPI(
     lifespan=lifespan,
 )
 
-init_prometheus_metrics(APP)
+if mcim_config.prometheus:
+    init_prometheus_metrics(APP)
 
 
 APP.include_router(controller_router)
