@@ -27,13 +27,14 @@ TRUSTABLE_RESPONSE_GAUGE = Gauge(
     multiprocess_mode="livesum",
 )
 
-REDIS_CACHE_HIT_GAUGE = Gauge(
-    "redis_cache_hit",
-    "Redis cache hit",
-    labelnames=("func",),
-    registry=APP_REGISTRY,
-    multiprocess_mode="livesum",
-)
+# useless
+# REDIS_CACHE_HIT_GAUGE = Gauge(
+#     "redis_cache_hit",
+#     "Redis cache hit",
+#     labelnames=("func",),
+#     registry=APP_REGISTRY,
+#     multiprocess_mode="livesum",
+# )
 
 
 def init_prometheus_metrics(app: FastAPI):
