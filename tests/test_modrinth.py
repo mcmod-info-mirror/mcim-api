@@ -50,7 +50,7 @@ def test_modrinth_projects(client: TestClient):
 
 def test_modrinth_project_versions(client: TestClient):
     for project_id in project_ids:
-        response = client.get(f"/modrinth/v2/project/{project_id}/versions")
+        response = client.get(f"/modrinth/v2/project/{project_id}/version")
         assert response.status_code == 200
         assert len(response.json()) > 0
 
