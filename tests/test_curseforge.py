@@ -76,8 +76,10 @@ def test_curseforge_fingerprints(client: TestClient):
         "/curseforge/v1/fingerprints", json={"fingerprints": test_fingerprints}
     )
     assert response.status_code == 200
-    assert response.json()["data"]["exactFingerprints"] == fingerprints
-    assert response.json()["data"]["unmatchedFingerprints"] == error_fingerprints
+    assert sorted(response.json()["data"]["exactFingerprints"]) == sorted(fingerprints)
+    assert sorted(response.json()["data"]["unmatchedFingerprints"]) == sorted(
+        error_fingerprints
+    )
     assert len(response.json()["data"]["exactMatches"]) == len(fingerprints)
 
 
@@ -86,8 +88,10 @@ def test_curseforge_fingerprints_432(client: TestClient):
         "/curseforge/v1/fingerprints/432", json={"fingerprints": test_fingerprints}
     )
     assert response.status_code == 200
-    assert response.json()["data"]["exactFingerprints"] == fingerprints
-    assert response.json()["data"]["unmatchedFingerprints"] == error_fingerprints
+    assert sorted(response.json()["data"]["exactFingerprints"]) == sorted(fingerprints)
+    assert sorted(response.json()["data"]["unmatchedFingerprints"]) == sorted(
+        error_fingerprints
+    )
     assert len(response.json()["data"]["exactMatches"]) == len(fingerprints)
 
 

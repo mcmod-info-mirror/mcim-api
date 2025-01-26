@@ -99,6 +99,7 @@ class SearchResponse(BaseModel):
     data: List[Mod]
     pagination: Pagination
 
+
 async def check_search_result(request: Request, res: dict):
     modids = set()
     for mod in res["data"]:
