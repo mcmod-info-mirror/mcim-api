@@ -48,7 +48,7 @@ async def close_aio_redis_engine():
     """
     global aio_redis_engine
     if aio_redis_engine is not None:
-        await aio_redis_engine.close()
+        await aio_redis_engine.aclose()
         log.success("closed redis connection")
     else:
         log.warning("no redis connection to close")
@@ -73,7 +73,7 @@ async def close_sync_queue_redis_engine():
     """
     global sync_queuq_redis_engine
     if sync_queuq_redis_engine is not None:
-        await sync_queuq_redis_engine.close()
+        await sync_queuq_redis_engine.aclose()
         log.success("closed redis connection")
     else:
         log.warning("no redis connection to close")

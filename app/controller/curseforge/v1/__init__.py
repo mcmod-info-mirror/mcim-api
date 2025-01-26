@@ -74,6 +74,7 @@ class SearchResponse(BaseModel):
     data: List[Mod]
     pagination: Pagination
 
+
 async def check_search_result(request: Request, res: dict):
     modids = set()
     for mod in res["data"]:
@@ -443,7 +444,7 @@ async def curseforge_fingerprints(item: fingerprints_item, request: Request):
                 exactMatches=result_fingerprints_models,
                 unmatchedFingerprints=not_match_fingerprints,
                 installedFingerprints=[],
-            ).model_dump()
+            )
         ),
         trustable=trustable,
     )
@@ -495,7 +496,7 @@ async def curseforge_fingerprints_432(item: fingerprints_item, request: Request)
                 exactMatches=result_fingerprints_models,
                 unmatchedFingerprints=not_match_fingerprints,
                 installedFingerprints=[],
-            ).model_dump()
+            )
         ),
         trustable=trustable,
     )
