@@ -62,9 +62,7 @@ def test_curseforge_file(client: TestClient):
 def test_curseforge_file_download_url(client: TestClient):
     response = client.get(f"/curseforge/v1/mods/{modId}/files/{fileId}/download-url")
     assert response.status_code == 200
-    assert response.json()["data"]["id"] == fileId
-    assert response.json()["data"]["modId"] == modId
-    assert response.json()["data"]["downloadUrl"] == download_url
+    assert response.text == download_url
 
 
 def test_curseforge_files(client: TestClient):
@@ -78,9 +76,9 @@ def test_curseforge_fingerprints(client: TestClient):
         "/curseforge/v1/fingerprints", json={"fingerprints": test_fingerprints}
     )
     assert response.status_code == 200
-    assert response.json()["exactFingerprints"] == fingerprints
-    assert response.json()["unmatchedFingerprints"] == error_fingerprints
-    assert len(response.json()["exactMatches"]) == len(fingerprints)
+    assert response.json()["data"]["exactFingerprints"] == fingerprints
+    assert response.json()["data"]["unmatchedFingerprints"] == error_fingerprints
+    assert len(response.json()["data"]["exactMatches"]) == len(fingerprints)
 
 
 def test_curseforge_fingerprints_432(client: TestClient):
@@ -88,9 +86,9 @@ def test_curseforge_fingerprints_432(client: TestClient):
         "/curseforge/v1/fingerprints/432", json={"fingerprints": test_fingerprints}
     )
     assert response.status_code == 200
-    assert response.json()["exactFingerprints"] == fingerprints
-    assert response.json()["unmatchedFingerprints"] == error_fingerprints
-    assert len(response.json()["exactMatches"]) == len(fingerprints)
+    assert response.json()["data"]["exactFingerprints"] == fingerprints
+    assert response.json()["data"]["unmatchedFingerprints"] == error_fingerprints
+    assert len(response.json()["data"]["exactMatches"]) == len(fingerprints)
 
 
 def test_curseforge_categories(client: TestClient):
