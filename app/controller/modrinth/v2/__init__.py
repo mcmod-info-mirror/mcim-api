@@ -20,7 +20,7 @@ from app.config.mcim import MCIMConfig
 from app.utils.response import (
     TrustableResponse,
     UncachedResponse,
-    CurseforgeBaseResponse,
+    BaseResponse,
 )
 from app.utils.network import request as request_async
 from app.utils.loger import log
@@ -55,7 +55,7 @@ async def modrinth_statistics(request: Request):
     project_count = await request.app.state.aio_mongo_engine.count(Project)
     version_count = await request.app.state.aio_mongo_engine.count(Version)
     file_count = await request.app.state.aio_mongo_engine.count(File)
-    return CurseforgeBaseResponse(
+    return BaseResponse(
         content=ModrinthStatistics(
             projects=project_count, versions=version_count, files=file_count
         )

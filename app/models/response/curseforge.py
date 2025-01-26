@@ -27,15 +27,6 @@ class _Category(BaseModel):
     displayIndex: int
 
 
-class CurseforgeBaseResponse(BaseModel):
-    data: Union[Mod, File, dict, List, str]
-
-
-class PageBaseResponse(BaseModel):
-    data: Union[Mod, File, dict, List]
-    pagination: Pagination
-
-
 class SearchResponse(BaseModel):
     data: List[Mod]
     pagination: Pagination

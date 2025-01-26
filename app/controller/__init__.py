@@ -16,7 +16,7 @@ from app.models.database.curseforge import (
     Fingerprint as CurseForgeFingerprint,
 )
 from app.models.database.file_cdn import File as FileCDNFile
-from app.utils.response import CurseforgeBaseResponse
+from app.utils.response import BaseResponse
 from app.utils.response_cache import cache
 
 mcim_config = MCIMConfig.load()
@@ -112,7 +112,7 @@ async def mcim_statistics(
             "file": file_cdn_file_count[0]["count"],
         }
     
-    return CurseforgeBaseResponse(
+    return BaseResponse(
         content=result,
         headers={"Cache-Control": f"max-age=3600"},
     )
