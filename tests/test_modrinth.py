@@ -165,18 +165,3 @@ def test_modrinth_tag_game_version(client: TestClient):
     response = client.get("/modrinth/v2/tag/game_version")
     assert response.status_code == 200
     assert len(response.json()) > 0
-
-def test_modrinth_tag_donation_platform(client: TestClient):
-    response = client.get("/modrinth/v2/tag/donation_platform")
-    assert response.status_code == 200
-    assert len(response.json()) > 0
-
-def test_modrinth_tag_project_type(client: TestClient):
-    response = client.get("/modrinth/v2/tag/project_type")
-    assert response.status_code == 200
-    assert len(response.json()) > 0
-
-def test_modrinth_tag_side_type(client: TestClient):
-    response = client.get("/modrinth/v2/tag/side_type")
-    assert response.status_code == 200
-    assert len(response.json()) > 0

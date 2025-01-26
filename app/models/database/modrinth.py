@@ -4,15 +4,18 @@ from pydantic import BaseModel, field_serializer, field_validator, model_validat
 from typing import List, Optional, Union
 from datetime import datetime
 
+
 class DonationUrl(BaseModel):
     id: Optional[str] = None
     platform: Optional[str] = None
     url: Optional[str] = None
 
+
 class License(BaseModel):
     id: Optional[str] = None
     name: Optional[str] = None
     url: Optional[str] = None
+
 
 class GalleryItem(BaseModel):
     url: str
@@ -21,6 +24,7 @@ class GalleryItem(BaseModel):
     description: Optional[str] = None
     created: datetime
     ordering: Optional[int] = None
+
 
 class Project(Model):
     id: str = Field(primary_field=True, index=True)
@@ -62,11 +66,7 @@ class Project(Model):
 
     sync_at: datetime = Field(default_factory=datetime.utcnow)
 
-    model_config = {
-        "collection": "modrinth_projects",
-        "title": "Modrinth Project"
-    }
-
+    model_config = {"collection": "modrinth_projects", "title": "Modrinth Project"}
 
 
 class Dependencies(BaseModel):
@@ -90,15 +90,15 @@ class File(Model):
     size: int
     file_type: Optional[str] = None
 
-    version_id: Optional[str] #  = Field(index=True)  # 有可能没有该 file...
-    project_id: Optional[str] #  = Field(index=True)
+    version_id: Optional[str]  #  = Field(index=True)  # 有可能没有该 file...
+    project_id: Optional[str]  #  = Field(index=True)
 
     file_cdn_cached: Optional[bool] = False
 
     sync_at: datetime = Field(default_factory=datetime.utcnow)
 
-    model_config = {"collection": "modrinth_files", 
-                    "title": "Modrinth File"}
+    model_config = {"collection": "modrinth_files", "title": "Modrinth File"}
+
 
 class FileInfo(BaseModel):
     hashes: Hashes
@@ -107,6 +107,7 @@ class FileInfo(BaseModel):
     primary: bool
     size: int
     file_type: Optional[str] = None
+
 
 class Version(Model):
     id: str = Field(primary_field=True, index=True)
@@ -130,5 +131,39 @@ class Version(Model):
 
     sync_at: datetime = Field(default_factory=datetime.utcnow)
 
-    model_config = {"collection": "modrinth_versions", 
-                    "title": "Modrinth Version"}
+    model_config = {"collection": "modrinth_versions", "title": "Modrinth Version"}
+
+
+class Category(Model):
+    icon: str
+    name: str
+    project_type: str
+    header: str
+
+    sync_at: datetime = Field(default_factory=datetime.utcnow)
+
+    model_config = {"collection": "modrinth_categories", "title": "Modrinth Category"}
+
+
+class Loader(Model):
+    icon: str
+    name: str
+    supported_project_types: List[str]
+
+    sync_at: datetime = Field(default_factory=datetime.utcnow)
+
+    model_config = {"collection": "modrinth_loaders", "title": "Modrinth Loader"}
+
+
+class GameVersion(Model):
+    version: str
+    version_type: str
+    date: datetime
+    major: bool
+
+    sync_at: datetime = Field(default_factory=datetime.utcnow)
+
+    model_config = {
+        "collection": "modrinth_game_versions",
+        "title": "Modrinth Game Version",
+    }
