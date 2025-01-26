@@ -12,7 +12,7 @@ from app.models.database.file_cdn import File as cdnFile
 from app.config import MCIMConfig
 from app.utils.loger import log
 from app.utils.response_cache import cache
-from app.utils.response import BaseResponse
+from app.utils.response import CurseforgeBaseResponse
 from app.utils.network import ResponseCodeException
 from app.utils.network import request as request_async
 
@@ -69,7 +69,7 @@ async def file_cdn_statistics(request: Request):
     cdnFile_count = await cdnFile_collection.aggregate(
         [{"$collStats": {"count": {}}}]
     ).to_list(length=None)
-    return BaseResponse(content={"file_cdn_files": cdnFile_count[0]["count"]})
+    return CurseforgeBaseResponse(content={"file_cdn_files": cdnFile_count[0]["count"]})
 
 
 if mcim_config.file_cdn:
@@ -243,7 +243,7 @@ async def list_file_cdn(
     pipeline = [{"$match": match_stage}, {"$sort": {"_id": 1}}, {"$limit": page_size}]
 
     results = await files_collection.aggregate(pipeline).to_list(length=None)
-    return BaseResponse(content=results)
+    return CurseforgeBaseResponse(content=results)
 
 
 async def check_file_hash_and_size(url: str, hash: str, size: int):
@@ -290,7 +290,7 @@ async def report(
             await cdnFile_collection.update_one(
                 {"_id": file.sha1}, {"$set": {"disable": False}}
             )
-            return BaseResponse(
+            return CurseforgeBaseResponse(
                 status_code=500,
                 content={
                     "code": 500,
@@ -302,7 +302,7 @@ async def report(
             await cdnFile_collection.update_one(
                 {"_id": file.sha1}, {"$set": {"disable": True}}
             )
-            return BaseResponse(
+            return CurseforgeBaseResponse(
                 status_code=200,
                 content={
                     "code": 200,
@@ -311,7 +311,7 @@ async def report(
                 headers={"Cache-Control": "no-cache"},
             )
     else:
-        return BaseResponse(
+        return CurseforgeBaseResponse(
             status_code=404,
             content={"code": 404, "message": "File not found"},
             headers={"Cache-Control": "no-cache"},

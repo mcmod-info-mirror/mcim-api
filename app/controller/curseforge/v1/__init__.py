@@ -15,14 +15,17 @@ from app.sync_queue.curseforge import (
 )
 from app.models.database.curseforge import Mod, File, Fingerprint
 from app.models.response.curseforge import (
-    FingerprintResponse,
-    _FingerprintResponse,
-    Category,
-    CurseforgeBaseResponse,
-    CurseforgePageBaseResponse,
-    CurseforgeFilesResponse,
-    CurseforgeDownloadUrlResponse,
+    _FingerprintResult,
     Pagination,
+    SearchResponse,
+    ModResponse,
+    ModsResponse,
+    ModFilesResponse,
+    FileResponse,
+    FilesResponse,
+    DownloadUrlResponse,
+    FingerprintResponse,
+    CaregoriesResponse,
 )
 from app.config.mcim import MCIMConfig
 from app.utils.response import TrustableResponse, UncachedResponse, BaseResponse
@@ -41,22 +44,6 @@ v1_router = APIRouter(prefix="/v1", tags=["curseforge"])
 
 SEARCH_TIMEOUT = 3
 
-"""
-ModsSearchSortField
-1=Featured
-2=Popularity
-3=LastUpdated
-4=Name
-5=Author
-6=TotalDownloads
-7=Category
-8=GameVersion
-9=EarlyAccess
-10=FeaturedReleased
-11=ReleasedDate
-12=Rating
-"""
-
 
 class ModsSearchSortField(int, Enum):
     Featured = 1
@@ -71,18 +58,6 @@ class ModsSearchSortField(int, Enum):
     FeaturedReleased = 10
     ReleasedDate = 11
     Rating = 12
-
-
-"""
-ModLoaderType
-0=Any
-1=Forge
-2=Cauldron
-3=LiteLoader
-4=Fabric
-5=Quilt
-6=NeoForge
-"""
 
 
 class ModLoaderType(int, Enum):
@@ -178,13 +153,13 @@ async def curseforge_search(
         )
     ).json()
     await check_search_result(request=request, res=res)
-    return TrustableResponse(content=res)
+    return TrustableResponse(content=SearchResponse(**res))
 
 
 @v1_router.get(
     "/mods/{modId}",
     description="Curseforge Mod 信息",
-    response_model=Mod,
+    response_model=ModResponse,
 )
 @cache(expire=mcim_config.expire_second.curseforge.mod)
 async def curseforge_mod(
@@ -199,7 +174,7 @@ async def curseforge_mod(
         log.debug(f"modId: {modId} not found, add to queue.")
         return UncachedResponse()
     return TrustableResponse(
-        content=CurseforgeBaseResponse(data=mod_model),
+        content=ModResponse(data=mod_model),
         trustable=trustable,
     )
 
@@ -212,7 +187,7 @@ class modIds_item(BaseModel):
 @v1_router.post(
     "/mods",
     description="Curseforge Mods 信息",
-    response_model=List[Mod],
+    response_model=ModsResponse,
 )
 # @cache(expire=mcim_config.expire_second.curseforge.mod)
 async def curseforge_mods(item: modIds_item, request: Request):
@@ -226,7 +201,7 @@ async def curseforge_mods(item: modIds_item, request: Request):
         await add_curseforge_modIds_to_queue(modIds=item.modIds)
         log.debug(f"modIds: {item.modIds} not found, add to queue.")
         return TrustableResponse(
-            content=CurseforgeBaseResponse(data=[]).model_dump(),
+            content=ModsResponse(data=[]).model_dump(),
             trustable=False,
         )
     elif mod_model_count != item_count:
@@ -238,32 +213,9 @@ async def curseforge_mods(item: modIds_item, request: Request):
         )
         trustable = False
     return TrustableResponse(
-        content=CurseforgeBaseResponse(data=mod_models),
+        content=ModsResponse(data=mod_models),
         trustable=trustable,
     )
-
-
-"""
-Parameters
-Name	In	Type	Required	Description
-modId	path	integer(int32)	true	The mod id the files belong to
-gameVersion	query	string	false	Filter by game version string
-modLoaderType	query	ModLoaderType	false	ModLoaderType enumeration
-gameVersionTypeId	query	integer(int32)	false	Filter only files that are tagged with versions of the given gameVersionTypeId
-index	query	integer(int32)	false	A zero based index of the first item to include in the response, the limit is: (index + pageSize <= 10,000).
-pageSize	query	integer(int32)	false	The number of items to include in the response, the default/maximum value is 50.
-"""
-
-"""
-Possible enum values:
-0=Any
-1=Forge
-2=Cauldron
-3=LiteLoader
-4=Fabric
-5=Quilt
-6=NeoForge
-"""
 
 
 def convert_modloadertype(type_id: int) -> Optional[str]:
@@ -287,7 +239,7 @@ def convert_modloadertype(type_id: int) -> Optional[str]:
 @v1_router.get(
     "/mods/{modId}/files",
     description="Curseforge Mod 文件信息",
-    response_model=List[File],
+    response_model=ModFilesResponse,
 )
 @cache(expire=mcim_config.expire_second.curseforge.file)
 async def curseforge_mod_files(
@@ -349,7 +301,7 @@ async def curseforge_mod_files(
         doc_results.append(doc)
 
     return TrustableResponse(
-        content=CurseforgePageBaseResponse(
+        content=ModFilesResponse(
             data=doc_results,
             pagination=Pagination(
                 index=index,
@@ -369,7 +321,7 @@ class fileIds_item(BaseModel):
 @v1_router.post(
     "/mods/files",
     description="Curseforge Mod 文件信息",
-    response_model=CurseforgeFilesResponse,
+    response_model=FilesResponse,
 )
 # @cache(expire=mcim_config.expire_second.curseforge.file)
 async def curseforge_files(item: fileIds_item, request: Request):
@@ -388,7 +340,7 @@ async def curseforge_files(item: fileIds_item, request: Request):
         await add_curseforge_fileIds_to_queue(fileIds=not_match_fileids)
         trustable = False
     return TrustableResponse(
-        content=CurseforgeBaseResponse(data=file_models),
+        content=FilesResponse(data=file_models),
         trustable=trustable,
     )
 
@@ -397,6 +349,7 @@ async def curseforge_files(item: fileIds_item, request: Request):
 @v1_router.get(
     "/mods/{modId}/files/{fileId}",
     description="Curseforge Mod 文件信息",
+    response_model=FileResponse,
 )
 @cache(expire=mcim_config.expire_second.curseforge.file)
 async def curseforge_mod_file(
@@ -412,7 +365,7 @@ async def curseforge_mod_file(
         await add_curseforge_fileIds_to_queue(fileIds=[fileId])
         return UncachedResponse()
     return TrustableResponse(
-        content=CurseforgeBaseResponse(data=model),
+        content=FileResponse(data=model),
         trustable=trustable,
     )
 
@@ -420,7 +373,7 @@ async def curseforge_mod_file(
 @v1_router.get(
     "/mods/{modId}/files/{fileId}/download-url",
     description="Curseforge Mod 文件下载地址",
-    response_class=CurseforgeDownloadUrlResponse,
+    response_class=DownloadUrlResponse,
 )
 # @cache(expire=mcim_config.expire_second.curseforge.file)
 async def curseforge_mod_file_download_url(
@@ -435,7 +388,7 @@ async def curseforge_mod_file_download_url(
         await add_curseforge_fileIds_to_queue(fileIds=[fileId])
         return UncachedResponse()
     return TrustableResponse(
-        content=CurseforgeDownloadUrlResponse(data=model.downloadUrl),
+        content=DownloadUrlResponse(data=model.downloadUrl),
         trustable=True,
     )
 
@@ -466,7 +419,7 @@ async def curseforge_fingerprints(item: fingerprints_item, request: Request):
         trustable = False
         return TrustableResponse(
             content=FingerprintResponse(
-                data=_FingerprintResponse(unmatchedFingerprints=item.fingerprints)
+                data=_FingerprintResult(unmatchedFingerprints=item.fingerprints)
             ),
             trustable=trustable,
         )
@@ -485,7 +438,7 @@ async def curseforge_fingerprints(item: fingerprints_item, request: Request):
         exactFingerprints.append(fingerprint_model.id)
     return TrustableResponse(
         content=FingerprintResponse(
-            data=_FingerprintResponse(
+            data=_FingerprintResult(
                 isCacheBuilt=True,
                 exactFingerprints=exactFingerprints,
                 exactMatches=result_fingerprints_models,
@@ -519,7 +472,7 @@ async def curseforge_fingerprints_432(item: fingerprints_item, request: Request)
         trustable = False
         return TrustableResponse(
             content=FingerprintResponse(
-                data=_FingerprintResponse(unmatchedFingerprints=item.fingerprints)
+                data=_FingerprintResult(unmatchedFingerprints=item.fingerprints)
             ),
             trustable=trustable,
         )
@@ -537,7 +490,7 @@ async def curseforge_fingerprints_432(item: fingerprints_item, request: Request)
         exactFingerprints.append(fingerprint_model.id)
     return TrustableResponse(
         content=FingerprintResponse(
-            data=_FingerprintResponse(
+            data=_FingerprintResult(
                 isCacheBuilt=True,
                 exactFingerprints=exactFingerprints,
                 exactMatches=result_fingerprints_models,
@@ -552,7 +505,7 @@ async def curseforge_fingerprints_432(item: fingerprints_item, request: Request)
 @v1_router.get(
     "/categories",
     description="Curseforge Categories 信息",
-    response_model=List[Category],
+    response_model=CaregoriesResponse,
 )
 @cache(expire=mcim_config.expire_second.curseforge.categories)
 async def curseforge_categories(request: Request):
@@ -566,5 +519,5 @@ async def curseforge_categories(request: Request):
         )
 
     return TrustableResponse(
-        content=CurseforgeBaseResponse(data=json.loads(categories)).model_dump()
+        content=CaregoriesResponse(data=json.loads(categories)).model_dump()
     )

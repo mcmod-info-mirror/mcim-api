@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 from app.controller.curseforge.v1 import v1_router
 from app.utils.response_cache import cache
-from app.utils.response import BaseResponse
+from app.utils.response import CurseforgeBaseResponse
 from app.models.database.curseforge import Mod, File, Fingerprint
 
 curseforge_router = APIRouter(prefix="/curseforge", tags=["curseforge"])
@@ -14,7 +14,7 @@ curseforge_router.include_router(v1_router)
 @curseforge_router.get("/")
 @cache(never_expire=True)
 async def get_curseforge():
-    return BaseResponse(content={"message": "CurseForge"})
+    return CurseforgeBaseResponse(content={"message": "CurseForge"})
 
 
 class CurseforgeStatistics(BaseModel):
@@ -44,7 +44,7 @@ async def curseforge_statistics(request: Request):
         [{"$collStats": {"count": {}}}]
     ).to_list(length=None)
 
-    return BaseResponse(
+    return CurseforgeBaseResponse(
         content=CurseforgeStatistics(
             mods=mod_count[0]["count"],
             files=file_count[0]["count"],
