@@ -517,7 +517,7 @@ async def curseforge_fingerprints_432(item: fingerprints_item, request: Request)
         await add_curseforge_fingerprints_to_queue(fingerprints=item.fingerprints)
         trustable = False
         return TrustableResponse(
-            content=CurseforgeBaseResponse(
+            content=FingerprintResponse(
                 data=_FingerprintResponse(unmatchedFingerprints=item.fingerprints)
             ),
             trustable=trustable,
