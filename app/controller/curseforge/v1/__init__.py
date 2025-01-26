@@ -5,15 +5,15 @@ from odmantic import query
 from enum import Enum
 import json
 
-from app.sync.curseforge import (
-    sync_categories,
-)
+# from app.sync.curseforge import (
+#     sync_categories,
+# )
 from app.sync_queue.curseforge import (
     add_curseforge_modIds_to_queue,
     add_curseforge_fileIds_to_queue,
     add_curseforge_fingerprints_to_queue,
 )
-from app.models.database.curseforge import Mod, File, Fingerprint
+from app.models.database.curseforge import Mod, File, Fingerprint, Category
 from app.models.response.curseforge import (
     _FingerprintResult,
     Pagination,
@@ -508,16 +508,34 @@ async def curseforge_fingerprints_432(item: fingerprints_item, request: Request)
     response_model=CaregoriesResponse,
 )
 @cache(expire=mcim_config.expire_second.curseforge.categories)
-async def curseforge_categories(request: Request):
-    categories = await request.app.state.aio_redis_engine.hget(
-        "curseforge", "categories"
-    )
-    if categories is None:
-        sync_categories()
-        categories = await request.app.state.aio_redis_engine.hget(
-            "curseforge", "categories"
+async def curseforge_categories(
+    request: Request,
+    gameId: int,
+    classId: Optional[int] = None,
+    classOnly: Optional[bool] = None,
+):
+    if classId:
+        categories: Optional[List[Category]] = (
+            await request.app.state.aio_mongo_engine.find(
+                Category,
+                query.and_(Category.gameId == gameId, Category.classId == classId),
+            )
         )
-
+    elif classOnly:
+        categories: Optional[List[Category]] = (
+            await request.app.state.aio_mongo_engine.find(
+                Category, Category.gameId == gameId, Category.isClass == True
+            )
+        )
+    else:
+        categories: Optional[List[Category]] = (
+            await request.app.state.aio_mongo_engine.find(
+                Category, Category.gameId == gameId
+            )
+        )
+    if not categories:
+        return UncachedResponse()
     return TrustableResponse(
-        content=CaregoriesResponse(data=json.loads(categories)).model_dump()
+        content=CaregoriesResponse(data=categories),
+        trustable=True,
     )

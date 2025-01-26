@@ -18,6 +18,9 @@ download_url = (
     "https://edge.forgecdn.net/files/3913/840/hats-and-cosmetics-1.2.2-1.19.1.jar"
 )
 
+classId = 6
+gameId = 432
+
 
 def test_curseforge_root(client: TestClient):
     response = client.get("/curseforge/")
@@ -96,6 +99,21 @@ def test_curseforge_fingerprints_432(client: TestClient):
 
 
 def test_curseforge_categories(client: TestClient):
-    response = client.get("/curseforge/v1/categories")
+    # only gameId 432
+    response = client.get("/curseforge/v1/categories", params={"gameId": gameId})
     assert response.status_code == 200
     assert len(response.json()["data"]) > 0
+    # with classId 6
+    response = client.get(
+        "/curseforge/v1/categories", params={"gameId": gameId, "classId": classId}
+    )
+    assert response.status_code == 200
+    assert len(response.json()["data"]) > 0
+    assert all([category["classId"] == classId for category in response.json()["data"]])
+    # classOnly
+    response = client.get(
+        "/curseforge/v1/categories", params={"gameId": gameId, "classOnly": True}
+    )
+    assert response.status_code == 200
+    assert len(response.json()["data"]) > 0
+    assert all([category["isClass"] == True for category in response.json()["data"]])
