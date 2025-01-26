@@ -16,8 +16,12 @@ from app.models.database.modrinth import (
     Loader,
     GameVersion,
 )
-from app.models.response.modrinth import SearchResponse
-from app.sync.modrinth import async_tags
+from app.models.response.modrinth import (
+    SearchResponse,
+    CategoryInfo,
+    LoaderInfo,
+    GameVersionInfo,
+)
 from app.sync_queue.modrinth import (
     add_modrinth_project_ids_to_queue,
     add_modrinth_version_ids_to_queue,
@@ -569,7 +573,9 @@ async def modrinth_mutil_file_update(request: Request, items: MultiUpdateItems):
 
 
 @v2_router.get(
-    "/tag/category", description="Modrinth Category 信息", response_model=List[Category]
+    "/tag/category",
+    description="Modrinth Category 信息",
+    response_model=List[CategoryInfo],
 )
 @cache(expire=mcim_config.expire_second.modrinth.category)
 async def modrinth_tag_categories(request: Request):
@@ -582,7 +588,7 @@ async def modrinth_tag_categories(request: Request):
 @v2_router.get(
     "/tag/loader",
     description="Modrinth Loader 信息",
-    response_model=List[Loader],
+    response_model=List[LoaderInfo],
 )
 @cache(expire=mcim_config.expire_second.modrinth.category)
 async def modrinth_tag_loaders(request: Request):
@@ -595,7 +601,7 @@ async def modrinth_tag_loaders(request: Request):
 @v2_router.get(
     "/tag/game_version",
     description="Modrinth Game Version 信息",
-    response_model=List[GameVersion],
+    response_model=List[GameVersionInfo],
 )
 @cache(expire=mcim_config.expire_second.modrinth.category)
 async def modrinth_tag_game_versions(request: Request):

@@ -1,5 +1,6 @@
 from fastapi.responses import ORJSONResponse, Response
-from typing import Union, Optional
+from fastapi.encoders import jsonable_encoder
+from typing import Union, Optional, Any
 from pydantic import BaseModel
 import hashlib
 import orjson
@@ -29,27 +30,16 @@ class BaseResponse(ORJSONResponse):
 
     def __init__(
         self,
+        content: Any,
         status_code: int = 200,
-        content: Optional[Union[dict, BaseModel, list]] = None,
         headers: dict = {},
     ):
-        if content is None:
-            raw_content = None
-        # 自动序列化 BaseModel
-        if isinstance(content, dict):
-            raw_content = content
-        elif isinstance(content, BaseModel):
-            raw_content = content.model_dump()
-        elif isinstance(content, list):
-            raw_content = []
-            for item in content:
-                if isinstance(item, BaseModel):
-                    item = item.model_dump_json()
-                raw_content.append(item)
+        raw_content = jsonable_encoder(content)
+
         # 默认 Cache-Control: public, max-age=86400
         if status_code == 200 and "Cache-Control" not in headers:
             headers["Cache-Control"] = "public, max-age=86400"
-
+        
         # Etag
         if raw_content is not None and status_code == 200:
             headers["Etag"] = generate_etag(raw_content, status_code=status_code)

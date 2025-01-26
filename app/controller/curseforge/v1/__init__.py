@@ -3,11 +3,7 @@ from typing import List, Optional, Union, Annotated
 from pydantic import BaseModel, Field
 from odmantic import query
 from enum import Enum
-import json
 
-# from app.sync.curseforge import (
-#     sync_categories,
-# )
 from app.sync_queue.curseforge import (
     add_curseforge_modIds_to_queue,
     add_curseforge_fileIds_to_queue,

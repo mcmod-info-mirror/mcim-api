@@ -35,3 +35,20 @@ class SearchResponse(BaseModel):
     offset: int
     limit: int
     total_hits: int
+
+class CategoryInfo(BaseModel):
+    icon: str
+    name: str
+    project_type: str
+    header: str
+
+class LoaderInfo(BaseModel):
+    icon: str
+    name: str
+    supported_project_types: List[str]
+
+class GameVersionInfo(BaseModel):
+    version: str
+    version_type: str
+    date: datetime
+    major: bool

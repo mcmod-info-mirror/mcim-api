@@ -154,6 +154,7 @@ def test_modrinth_version_files_sha512_update(client: TestClient):
 def test_modrinth_tag_category(client: TestClient):
     response = client.get("/modrinth/v2/tag/category")
     assert response.status_code == 200
+    res = response.json()
     assert len(response.json()) > 0
 
 def test_modrinth_tag_loader(client: TestClient):
