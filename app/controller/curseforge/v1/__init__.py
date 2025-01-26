@@ -21,6 +21,7 @@ from app.models.response.curseforge import (
     CurseforgeBaseResponse,
     CurseforgePageBaseResponse,
     CurseforgeFilesResponse,
+    CurseforgeDownloadUrlResponse,
     Pagination,
 )
 from app.config.mcim import MCIMConfig
@@ -418,6 +419,7 @@ async def curseforge_mod_file(
 @v1_router.get(
     "/mods/{modId}/files/{fileId}/download-url",
     description="Curseforge Mod 文件下载地址",
+    response_class=CurseforgeDownloadUrlResponse,
 )
 # @cache(expire=mcim_config.expire_second.curseforge.file)
 async def curseforge_mod_file_download_url(
@@ -432,7 +434,7 @@ async def curseforge_mod_file_download_url(
         await add_curseforge_fileIds_to_queue(fileIds=[fileId])
         return UncachedResponse()
     return TrustableResponse(
-        content=CurseforgeBaseResponse(data=model.downloadUrl).model_dump(),
+        content=CurseforgeDownloadUrlResponse(data=model.downloadUrl),
         trustable=True,
     )
 

@@ -122,3 +122,6 @@ class CurseforgeFilesResponse(BaseModel):
 class CurseforgePageBaseResponse(BaseModel):
     data: Union[Mod, File, dict, List]
     pagination: Pagination
+
+class CurseforgeDownloadUrlResponse(BaseModel):
+    data: str

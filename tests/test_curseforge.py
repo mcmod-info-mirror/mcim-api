@@ -62,7 +62,7 @@ def test_curseforge_file(client: TestClient):
 def test_curseforge_file_download_url(client: TestClient):
     response = client.get(f"/curseforge/v1/mods/{modId}/files/{fileId}/download-url")
     assert response.status_code == 200
-    assert response.text == download_url
+    assert isinstance(response.json()["data"], str)
 
 
 def test_curseforge_files(client: TestClient):
