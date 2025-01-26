@@ -24,7 +24,7 @@ import-data:
     mongoimport --db mcim_backend --collection modrinth_categories --file ./data/modrinth_categories.json --jsonArray
     mongoimport --db mcim_backend --collection curseforge_mods --file ./data/curseforge_mods.json --jsonArray
     mongoimport --db mcim_backend --collection curseforge_files --file ./data/curseforge_files.json --jsonArray
-    mongoimport --db mcim_backend --collection curseforge_fingerprint --file ./data/curseforge_fingerprints.json --jsonArray
+    mongoimport --db mcim_backend --collection curseforge_fingerprints --file ./data/curseforge_fingerprints.json --jsonArray
     mongoimport --db mcim_backend --collection curseforge_categories --file ./data/curseforge_categories.json --jsonArray
 
 ci-install:
