@@ -373,7 +373,7 @@ async def curseforge_mod_file(
 @v1_router.get(
     "/mods/{modId}/files/{fileId}/download-url",
     description="Curseforge Mod 文件下载地址",
-    response_class=DownloadUrlResponse,
+    response_model=DownloadUrlResponse,
 )
 # @cache(expire=mcim_config.expire_second.curseforge.file)
 async def curseforge_mod_file_download_url(
