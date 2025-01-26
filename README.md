@@ -13,6 +13,7 @@ API 支持 [Curseforge](https://curseforge.com/) 和 [Modrinth](https://modrinth
 - [API](https://mod.mcimirror.top)
 - [Docs](https://mod.mcimirror.top/docs)
 - [MCIM 同步进度](https://t.me/mcim_sync)
+- [Status](https://status.mcimirror.top)
 
 ## 接入
 
