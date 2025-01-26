@@ -86,7 +86,7 @@ def test_modrinth_version_file_sha512(client: TestClient):
         assert response.status_code == 200
 
 
-def test_modrinth_version_file_sha1_latest(client: TestClient):
+def test_modrinth_version_file_sha1_update(client: TestClient):
     for sha1_hash in sha1_sample:
         response = client.post(
             f"/modrinth/v2/version_file/{sha1_hash}/update",
@@ -98,7 +98,7 @@ def test_modrinth_version_file_sha1_latest(client: TestClient):
         )
         assert response.status_code == 200
 
-def test_modrinth_version_file_sha512_latest(client: TestClient):
+def test_modrinth_version_file_sha512_update(client: TestClient):
     for sha512_hash in sha512_sample:
         response = client.post(
             f"/modrinth/v2/version_file/{sha512_hash}/update",
@@ -113,8 +113,7 @@ def test_modrinth_version_file_sha512_latest(client: TestClient):
 def test_modrinth_version_files_sha1(client: TestClient):
     response = client.post(
         "/modrinth/v2/version_files",
-        params={"algorithm": "sha1"},
-        json={"hashes": sha1_sample},
+        json={"algorithm": "sha1", "hashes": sha1_sample},
     )
     assert response.status_code == 200
     assert len(response.json()) == len(sha1_sample)
@@ -122,15 +121,14 @@ def test_modrinth_version_files_sha1(client: TestClient):
 def test_modrinth_version_files_sha512(client: TestClient):
     response = client.post(
         "/modrinth/v2/version_files",
-        params={"algorithm": "sha512"},
-        json={"hashes": sha512_sample},
+        json={"algorithm": "sha512", "hashes": sha512_sample},
     )
     assert response.status_code == 200
     assert len(response.json()) == len(sha512_sample)
 
-def test_modrinth_version_files_sha1_latest(client: TestClient):
+def test_modrinth_version_files_sha1_update(client: TestClient):
     response = client.post(
-        "/modrinth/v2/version_files/latest",
+        "/modrinth/v2/version_files/update",
         json={
             "hashes": sha1_sample,
             "algorithm": "sha1",
@@ -141,9 +139,9 @@ def test_modrinth_version_files_sha1_latest(client: TestClient):
     assert response.status_code == 200
     assert len(response.json()) > 0
 
-def test_modrinth_version_files_sha512_latest(client: TestClient):
+def test_modrinth_version_files_sha512_update(client: TestClient):
     response = client.post(
-        "/modrinth/v2/version_files/latest",
+        "/modrinth/v2/version_files/update",
         json={
             "hashes": sha512_sample,
             "algorithm": "sha512",
