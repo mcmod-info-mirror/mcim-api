@@ -70,12 +70,16 @@ class FileInfo(BaseModel):
     fileFingerprint: int = None
 
 
-class FingerprintResponse(BaseModel):
+class _FingerprintResponse(BaseModel):
     isCacheBuilt: bool = True
     exactMatches: List[Fingerprint] = []
     exactFingerprints: List[int] = []
     installedFingerprints: List[int] = []
     unmatchedFingerprints: List[int] = []
+
+
+class FingerprintResponse(BaseModel):
+    data: _FingerprintResponse
 
 
 {
@@ -109,6 +113,10 @@ class Category(BaseModel):
 
 class CurseforgeBaseResponse(BaseModel):
     data: Union[Mod, File, dict, List, str]
+
+
+class CurseforgeFilesResponse(BaseModel):
+    data: List[FileInfo]
 
 
 class CurseforgePageBaseResponse(BaseModel):

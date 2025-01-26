@@ -19,6 +19,7 @@ from app.models.response.curseforge import (
     Category,
     CurseforgeBaseResponse,
     CurseforgePageBaseResponse,
+    CurseforgeFilesResponse,
     Pagination,
 )
 from app.config.mcim import MCIMConfig
@@ -365,7 +366,7 @@ class fileIds_item(BaseModel):
 @v1_router.post(
     "/mods/files",
     description="Curseforge Mod 文件信息",
-    response_model=CurseforgeBaseResponse,
+    response_model=CurseforgeFilesResponse,
 )
 # @cache(expire=mcim_config.expire_second.curseforge.file)
 async def curseforge_files(item: fileIds_item, request: Request):
