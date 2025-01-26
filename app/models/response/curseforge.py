@@ -21,9 +21,9 @@ class _Category(BaseModel):
     url: str
     iconUrl: str
     dateModified: str
-    isClass: bool
-    classId: int
-    parentCategoryId: int
+    isClass: Optional[bool] = None
+    classId: Optional[int] = None
+    parentCategoryId: Optional[int] = None
     displayIndex: int
 
 
