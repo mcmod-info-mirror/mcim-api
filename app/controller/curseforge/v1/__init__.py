@@ -16,6 +16,7 @@ from app.sync_queue.curseforge import (
 from app.models.database.curseforge import Mod, File, Fingerprint
 from app.models.response.curseforge import (
     FingerprintResponse,
+    _FingerprintResponse,
     Category,
     CurseforgeBaseResponse,
     CurseforgePageBaseResponse,
@@ -461,9 +462,9 @@ async def curseforge_fingerprints(item: fingerprints_item, request: Request):
         await add_curseforge_fingerprints_to_queue(fingerprints=item.fingerprints)
         trustable = False
         return TrustableResponse(
-            content=CurseforgeBaseResponse(
-                data=FingerprintResponse(unmatchedFingerprints=item.fingerprints)
-            ).model_dump(),
+            content=FingerprintResponse(
+                data=_FingerprintResponse(unmatchedFingerprints=item.fingerprints)
+            ),
             trustable=trustable,
         )
     elif len(fingerprints_models) != len(item.fingerprints):
@@ -480,14 +481,14 @@ async def curseforge_fingerprints(item: fingerprints_item, request: Request):
         result_fingerprints_models.append(fingerprint)
         exactFingerprints.append(fingerprint_model.id)
     return TrustableResponse(
-        content=CurseforgeBaseResponse(
-            data=FingerprintResponse(
+        content=FingerprintResponse(
+            data=_FingerprintResponse(
                 isCacheBuilt=True,
                 exactFingerprints=exactFingerprints,
                 exactMatches=result_fingerprints_models,
                 unmatchedFingerprints=not_match_fingerprints,
                 installedFingerprints=[],
-            ).model_dump()
+            )
         ),
         trustable=trustable,
     )
@@ -515,8 +516,8 @@ async def curseforge_fingerprints_432(item: fingerprints_item, request: Request)
         trustable = False
         return TrustableResponse(
             content=CurseforgeBaseResponse(
-                data=FingerprintResponse(unmatchedFingerprints=item.fingerprints)
-            ).model_dump(),
+                data=_FingerprintResponse(unmatchedFingerprints=item.fingerprints)
+            ),
             trustable=trustable,
         )
     elif len(fingerprints_models) != len(item.fingerprints):
@@ -532,14 +533,14 @@ async def curseforge_fingerprints_432(item: fingerprints_item, request: Request)
         result_fingerprints_models.append(fingerprint)
         exactFingerprints.append(fingerprint_model.id)
     return TrustableResponse(
-        content=CurseforgeBaseResponse(
-            data=FingerprintResponse(
+        content=FingerprintResponse(
+            data=_FingerprintResponse(
                 isCacheBuilt=True,
                 exactFingerprints=exactFingerprints,
                 exactMatches=result_fingerprints_models,
                 unmatchedFingerprints=not_match_fingerprints,
                 installedFingerprints=[],
-            ).model_dump()
+            )
         ),
         trustable=trustable,
     )
