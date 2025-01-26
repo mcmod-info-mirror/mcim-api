@@ -17,34 +17,15 @@ class FileSortableGameVersions(BaseModel):
     gameVersionTypeId: Optional[int] = None
 
 
-"""
-1=Sha1
-2=Md5
-"""
-
-
 class Hash(BaseModel):
     value: str
     algo: int
-
-
-{"id": 0, "name": "string", "url": "string"}
 
 
 class Author(BaseModel):
     id: int
     name: str
     url: Optional[str] = None
-
-
-{
-    "id": 0,
-    "modId": 0,
-    "title": "string",
-    "description": "string",
-    "thumbnailUrl": "string",
-    "url": "string",
-}
 
 
 class Logo(BaseModel):
@@ -54,21 +35,6 @@ class Logo(BaseModel):
     description: Optional[str] = None
     thumbnailUrl: Optional[str] = None
     url: Optional[str] = None
-
-
-{
-    "id": 0,
-    "gameId": 0,
-    "name": "string",
-    "slug": "string",
-    "url": "string",
-    "iconUrl": "string",
-    "dateModified": "2019-08-24T14:15:22Z",
-    "isClass": True,
-    "classId": 0,
-    "parentCategoryId": 0,
-    "displayIndex": 0,
-}
 
 
 class Category(BaseModel):
@@ -85,29 +51,11 @@ class Category(BaseModel):
     displayIndex: Optional[int] = None
 
 
-{
-    "websiteUrl": "string",
-    "wikiUrl": "string",
-    "issuesUrl": "string",
-    "sourceUrl": "string",
-}
-
-
 class Links(BaseModel):
     websiteUrl: Optional[str] = None
     wikiUrl: Optional[str] = None
     issuesUrl: Optional[str] = None
     sourceUrl: Optional[str] = None
-
-
-{
-    "id": 0,
-    "modId": 0,
-    "title": "string",
-    "description": "string",
-    "thumbnailUrl": "string",
-    "url": "string",
-}
 
 
 class ScreenShot(BaseModel):
@@ -119,48 +67,9 @@ class ScreenShot(BaseModel):
     url: Optional[str] = None
 
 
-{"name": "string", "fingerprint": 0}
-
-
 class Module(BaseModel):
     name: Optional[str] = None
     fingerprint: Optional[int] = None
-
-
-{
-    "id": 0,
-    "gameId": 0,
-    "modId": 0,
-    "isAvailable": True,
-    "displayName": "string",
-    "fileName": "string",
-    "releaseType": 1,
-    "fileStatus": 1,
-    "hashes": [{"value": "string", "algo": 1}],
-    "fileDate": "2019-08-24T14:15:22Z",
-    "fileLength": 0,
-    "downloadCount": 0,
-    "fileSizeOnDisk": 0,
-    "downloadUrl": "string",
-    "gameVersions": ["string"],
-    "sortableGameVersions": [
-        {
-            "gameVersionName": "string",
-            "gameVersionPadded": "string",
-            "gameVersion": "string",
-            "gameVersionReleaseDate": "2019-08-24T14:15:22Z",
-            "gameVersionTypeId": 0,
-        }
-    ],
-    "dependencies": [{"modId": 0, "relationType": 1}],
-    "exposeAsAlternative": True,
-    "parentProjectFileId": 0,
-    "alternateFileId": 0,
-    "isSerlyAccessContent": True,
-    "earlyAccessEndDate": "2019-08-24T14:15:22Z",
-    "fileFingerprint": 0,
-    "modules": [{"name": "string", "fingerprint": 0}],
-}
 
 
 class File(Model):
@@ -235,16 +144,6 @@ class FileInfo(BaseModel):
     md5: Optional[str] = None
 
 
-{
-    "gameVersion": "string",
-    "fileId": 0,
-    "filename": "string",
-    "releaseType": 1,
-    "gameVersionTypeId": 0,
-    "modLoader": 0,
-}
-
-
 class FileIndex(BaseModel):
     gameVersion: Optional[str] = None
     fileId: int
@@ -290,9 +189,6 @@ class Mod(Model):
         "collection": "curseforge_mods",
         "title": "CurseForge Mod",
     }
-
-
-{"pagination": {"index": 0, "pageSize": 0, "resultCount": 0, "totalCount": 0}}
 
 
 class Pagination(BaseModel):

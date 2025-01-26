@@ -17,7 +17,7 @@ from app.database._redis import (
 )
 from app.utils.response_cache import Cache
 from app.utils.response_cache import cache
-from app.utils.response import BaseResponse
+from app.utils.response import CurseforgeBaseResponse
 from app.utils.middleware import ForceSyncMiddleware, TimingMiddleware, EtagMiddleware, CountTrustableMiddleware, UncachePOSTMiddleware
 from app.utils.metric import init_prometheus_metrics
 
@@ -117,4 +117,4 @@ WELCOME_MESSAGE = {
 )
 @cache(never_expire=True)
 async def root():
-    return BaseResponse(content=WELCOME_MESSAGE)
+    return CurseforgeBaseResponse(content=WELCOME_MESSAGE)
