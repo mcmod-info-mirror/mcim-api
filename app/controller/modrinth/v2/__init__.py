@@ -398,7 +398,7 @@ async def modrinth_files(items: HashesQuery, request: Request):
         (
             version.files[0].hashes.sha1
             if items.algorithm == Algorithm.sha1
-            else version.files[0].hashes.sha2
+            else version.files[0].hashes.sha512
         ): version.model_dump()
         for version in version_models
     }
