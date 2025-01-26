@@ -43,8 +43,7 @@ def test_modrinth_project(client: TestClient):
 
 def test_modrinth_projects(client: TestClient):
     response = client.get(
-        "/modrinth/v2/projects", params=json.dumps({"ids": project_ids})
-    )
+        "/modrinth/v2/projects", params={"ids": json.dumps(project_ids)})
     assert response.status_code == 200
     assert len(response.json()) == len(project_ids)
 
@@ -65,7 +64,7 @@ def test_modrinth_version(client: TestClient):
 
 def test_modrinth_versions(client: TestClient):
     response = client.get(
-        "/modrinth/v2/versions", params=json.dumps({"ids": version_ids})
+        "/modrinth/v2/versions", params={"ids": json.dumps(version_ids)}
     )
     assert response.status_code == 200
     assert len(response.json()) == len(version_ids)
