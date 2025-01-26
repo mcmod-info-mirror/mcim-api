@@ -1,8 +1,7 @@
 from pydantic import Field, BaseModel
 from typing import List, Union, Optional
 
-from app.models.database.curseforge import Mod, File, Pagination
-from app.models.database.curseforge import Fingerprint
+from app.models.database.curseforge import Mod, File, Fingerprint, Category, Pagination
 
 
 class _FingerprintResult(BaseModel):
@@ -11,21 +10,6 @@ class _FingerprintResult(BaseModel):
     exactFingerprints: List[int] = []
     installedFingerprints: List[int] = []
     unmatchedFingerprints: List[int] = []
-
-
-class _Category(BaseModel):
-    id: int
-    gameId: int
-    name: str
-    slug: str
-    url: str
-    iconUrl: str
-    dateModified: str
-    isClass: Optional[bool] = None
-    classId: Optional[int] = None
-    parentCategoryId: Optional[int] = None
-    displayIndex: int
-
 
 class SearchResponse(BaseModel):
     data: List[Mod]
@@ -62,4 +46,4 @@ class FingerprintResponse(BaseModel):
 
 
 class CaregoriesResponse(BaseModel):
-    data: List[_Category]
+    data: List[Category]

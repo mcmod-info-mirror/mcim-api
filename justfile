@@ -19,9 +19,13 @@ import-data:
     mongoimport --db mcim_backend --collection modrinth_projects --file ./data/modrinth_projects.json --jsonArray
     mongoimport --db mcim_backend --collection modrinth_versions --file ./data/modrinth_versions.json --jsonArray
     mongoimport --db mcim_backend --collection modrinth_files --file ./data/modrinth_files.json --jsonArray
+    mongoimport --db mcim_backend --collection modrinth_loaders --file ./data/modrinth_loaders.json --jsonArray
+    mongoimport --db mcim_backend --collection modrinth_game_versions --file ./data/modrinth_game_versions.json --jsonArray
+    mongoimport --db mcim_backend --collection modrinth_categories --file ./data/modrinth_categories.json --jsonArray
     mongoimport --db mcim_backend --collection curseforge_mods --file ./data/curseforge_mods.json --jsonArray
     mongoimport --db mcim_backend --collection curseforge_files --file ./data/curseforge_files.json --jsonArray
     mongoimport --db mcim_backend --collection curseforge_fingerprints --file ./data/curseforge_fingerprints.json --jsonArray
+    mongoimport --db mcim_backend --collection curseforge_categories --file ./data/curseforge_categories.json --jsonArray
 
 ci-install:
     pip install -r requirements.txt

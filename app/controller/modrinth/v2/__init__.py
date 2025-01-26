@@ -8,7 +8,14 @@ import time
 from datetime import datetime
 
 from app.sync import *
-from app.models.database.modrinth import Project, Version, File
+from app.models.database.modrinth import (
+    Project,
+    Version,
+    File,
+    Category,
+    Loader,
+    GameVersion,
+)
 from app.models.response.modrinth import SearchResponse
 from app.sync.modrinth import async_tags
 from app.sync_queue.modrinth import (
@@ -562,106 +569,37 @@ async def modrinth_mutil_file_update(request: Request, items: MultiUpdateItems):
 
 
 @v2_router.get(
-    "/tag/category",
-    description="Modrinth Category 信息",
-    response_model=List,
+    "/tag/category", description="Modrinth Category 信息", response_model=List[Category]
 )
 @cache(expire=mcim_config.expire_second.modrinth.category)
 async def modrinth_tag_categories(request: Request):
-    category = await request.app.state.aio_redis_engine.hget("modrinth", "categories")
-    if category is None:
-        await async_tags()
-        log.debug("Category not found, sync.")
-        category = await request.app.state.aio_redis_engine.hget(
-            "modrinth", "categories"
-        )
-    return TrustableResponse(content=json.loads(category))
+    categories = await request.app.state.aio_mongo_engine.find(Category)
+    if categories is None:
+        return UncachedResponse()
+    return TrustableResponse(content=[category for category in categories])
 
 
 @v2_router.get(
     "/tag/loader",
     description="Modrinth Loader 信息",
-    response_model=List,
+    response_model=List[Loader],
 )
 @cache(expire=mcim_config.expire_second.modrinth.category)
 async def modrinth_tag_loaders(request: Request):
-    loader = await request.app.state.aio_redis_engine.hget("modrinth", "loaders")
-    if loader is None:
-        await async_tags()
-        log.debug("Loader not found, sync.")
-        loader = await request.app.state.aio_redis_engine.hget("modrinth", "loaders")
-    return TrustableResponse(content=json.loads(loader))
+    loaders = await request.app.state.aio_mongo_engine.find(Loader)
+    if loaders is None:
+        return UncachedResponse()
+    return TrustableResponse(content=[loader for loader in loaders])
 
 
 @v2_router.get(
     "/tag/game_version",
     description="Modrinth Game Version 信息",
-    response_model=List,
+    response_model=List[GameVersion],
 )
 @cache(expire=mcim_config.expire_second.modrinth.category)
 async def modrinth_tag_game_versions(request: Request):
-    game_version = await request.app.state.aio_redis_engine.hget(
-        "modrinth", "game_versions"
-    )
-    if game_version is None:
-        await async_tags()
-        log.debug("Game Version not found, sync.")
-        game_version = await request.app.state.aio_redis_engine.hget(
-            "modrinth", "game_versions"
-        )
-    return TrustableResponse(content=json.loads(game_version))
-
-
-@v2_router.get(
-    "/tag/donation_platform",
-    description="Modrinth Donation Platform 信息",
-    response_model=List,
-)
-@cache(expire=mcim_config.expire_second.modrinth.category)
-async def modrinth_tag_donation_platforms(request: Request):
-    donation_platform = await request.app.state.aio_redis_engine.hget(
-        "modrinth", "donation_platform"
-    )
-    if donation_platform is None:
-        await async_tags()
-        log.debug("Donation Platform not found, sync.")
-        donation_platform = await request.app.state.aio_redis_engine.hget(
-            "modrinth", "donation_platform"
-        )
-    return TrustableResponse(content=json.loads(donation_platform))
-
-
-@v2_router.get(
-    "/tag/project_type",
-    description="Modrinth Project Type 信息",
-    response_model=List,
-)
-@cache(expire=mcim_config.expire_second.modrinth.category)
-async def modrinth_tag_project_types(request: Request):
-    project_type = await request.app.state.aio_redis_engine.hget(
-        "modrinth", "project_type"
-    )
-    if project_type is None:
-        await async_tags()
-        log.debug("Project Type not found, sync.")
-        project_type = await request.app.state.aio_redis_engine.hget(
-            "modrinth", "project_type"
-        )
-    return TrustableResponse(content=json.loads(project_type))
-
-
-@v2_router.get(
-    "/tag/side_type",
-    description="Modrinth Side Type 信息",
-    response_model=List,
-)
-@cache(expire=mcim_config.expire_second.modrinth.category)
-async def modrinth_tag_side_types(request: Request):
-    side_type = await request.app.state.aio_redis_engine.hget("modrinth", "side_type")
-    if side_type is None:
-        await async_tags()
-        log.debug("Side Type not found, sync.")
-        side_type = await request.app.state.aio_redis_engine.hget(
-            "modrinth", "side_type"
-        )
-    return TrustableResponse(content=json.loads(side_type))
+    game_versions = await request.app.state.aio_mongo_engine.find(GameVersion)
+    if game_versions is None:
+        return UncachedResponse()
+    return TrustableResponse(content=[game_version for game_version in game_versions])

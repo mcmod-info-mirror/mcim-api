@@ -44,7 +44,7 @@ class BaseResponse(ORJSONResponse):
             raw_content = []
             for item in content:
                 if isinstance(item, BaseModel):
-                    item = item.model_dump()
+                    item = item.model_dump_json()
                 raw_content.append(item)
         # 默认 Cache-Control: public, max-age=86400
         if status_code == 200 and "Cache-Control" not in headers:
