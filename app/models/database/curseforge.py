@@ -100,7 +100,6 @@ class File(Model):
     fileFingerprint: Optional[int] = None
     modules: Optional[List[Module]] = None
 
-    need_to_cache: bool = True  # 不缓存 Mod 以外的东西，在获得 mod 类型的时候设置
     file_cdn_cached: bool = False
     sha1: Optional[str] = None
     md5: Optional[str] = None
