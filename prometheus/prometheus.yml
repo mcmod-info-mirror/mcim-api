@@ -8,22 +8,12 @@ scrape_configs:
   #   static_configs:
   #     - targets: ['localhost:9090']
 
-  - job_name: 'app'
+  - job_name: 'mcim-api'
     scrape_interval: 5s
     static_configs:
       - targets: ['mcim_api:8000']
 
-  - job_name: hk2
+  - job_name: localhost
     scrape_interval: 5s
     static_configs:
-    - targets: ['hk1-node_exporter:9100']
-
-  - job_name: hk2
-    scrape_interval: 5s
-    static_configs:
-    - targets: ['hk2-node_exporter:9100']
-
-  - job_name: dramatiq
-    scrape_interval: 5s
-    static_configs:
-    - targets: ['mcim_sync:9191']
+    - targets: ['node_exporter:9100']

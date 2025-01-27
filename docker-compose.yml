@@ -96,39 +96,6 @@ services:
         reservations:
           memory: 200M
 
-
-  # mcim_sync:
-  #   container_name: mcim_sync
-  #   image: mcim_sync
-  #   build:
-  #     context: .
-  #     dockerfile: ./docker/dramatiq
-  #   environment:
-  #     PROMETHEUS_MULTIPROC_DIR: /tmp/dramatiq-prometheus
-  #     dramatiq_prom_db: /tmp/dramatiq-prometheus
-  #     TZ: Asia/Shanghai
-  #     SYNC_MODE: SYNC_INFO
-  #   ports:
-  #     - 9191:9191
-  #   restart: always
-  #   depends_on:
-  #     - mongodb
-  #     - redis
-  #   volumes:
-  #     - /opt/mcim/config:/config
-  #     - /opt/mcim/logs:/logs
-  #   command: >
-  #     sh -c "rm -rf /tmp/dramatiq-prometheus/ &&
-  #           mkdir -p /tmp/dramatiq-prometheus &&
-  #           dramatiq app.sync"
-  #   logging: *default-logging
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         memory: 1024M
-  #       reservations:
-  #         memory: 200M
-
   # tc:
   #   image: "${DOCKER_IMAGE_TERMINAL:-lukaszlach/docker-tc}"
   #   container_name: docker-tc
