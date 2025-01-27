@@ -129,23 +129,6 @@ services:
   #       reservations:
   #         memory: 200M
 
-  translate:
-    container_name: translate
-    image: mcim_translate
-    build:
-      context: .
-      dockerfile: ./translate-mod-summary/Dockerfile
-    restart: always
-    depends_on:
-      - mongodb
-    volumes:
-      - /opt/mcim/translate-mod-summary/config:/translate-mod-summary/config
-    logging: *default-logging
-    deploy:
-      resources:
-        limits:
-          memory: 200M
-
   # tc:
   #   image: "${DOCKER_IMAGE_TERMINAL:-lukaszlach/docker-tc}"
   #   container_name: docker-tc
