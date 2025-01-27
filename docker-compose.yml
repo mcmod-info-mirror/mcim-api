@@ -124,6 +124,7 @@ services:
     network_mode: host
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana_data:/var/lib/grafana
     env_file:
       - ./grafana/config.monitoring
     logging: *default-logging
