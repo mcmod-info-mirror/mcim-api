@@ -11,9 +11,9 @@ scrape_configs:
   - job_name: 'mcim-api'
     scrape_interval: 5s
     static_configs:
-      - targets: ['mcim_api:8000']
+      - targets: ['localhost:8000']
 
   - job_name: localhost
     scrape_interval: 5s
     static_configs:
-    - targets: ['node_exporter:9100']
+    - targets: ['localhost:9100']
