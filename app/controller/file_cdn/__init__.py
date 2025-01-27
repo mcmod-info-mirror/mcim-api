@@ -72,146 +72,168 @@ async def file_cdn_statistics(request: Request):
     return BaseResponse(content={"file_cdn_files": cdnFile_count[0]["count"]})
 
 
-if mcim_config.file_cdn:
-    # modrinth | example: https://cdn.modrinth.com/data/AANobbMI/versions/IZskON6d/sodium-fabric-0.5.8%2Bmc1.20.6.jar
-    # WARNING: 直接查 version_id 忽略 project_id
-    # WARNING: 必须文件名一致
-    @file_cdn_router.get(
-        "/data/{project_id}/versions/{version_id}/{file_name}", tags=["modrinth"]
+
+# modrinth | example: https://cdn.modrinth.com/data/AANobbMI/versions/IZskON6d/sodium-fabric-0.5.8%2Bmc1.20.6.jar
+# WARNING: 直接查 version_id 忽略 project_id
+# WARNING: 必须文件名一致
+@file_cdn_router.get(
+    "/data/{project_id}/versions/{version_id}/{file_name}", tags=["modrinth"]
+)
+@cache(
+    expire=(
+        _93ATHOME_MAX_AGE
+        if FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.ORIGIN
+        else MAX_AGE
     )
-    @cache(
-        expire=(
-            _93ATHOME_MAX_AGE
-            if FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.ORIGIN
-            else MAX_AGE
+)
+async def get_modrinth_file(
+    project_id: str, version_id: str, file_name: str, request: Request
+):
+    def return_origin_response() -> RedirectResponse:
+        url = f"https://cdn.modrinth.com/data/{project_id}/versions/{version_id}/{file_name}"
+        FILE_CDN_FORWARD_TO_ORIGIN_COUNT.labels("modrinth").inc()
+        return RedirectResponse(
+            url=url,
+            headers={"Cache-Control": f"public, age={3600*24*1}"},
+            status_code=302,
         )
-    )
-    async def get_modrinth_file(
-        project_id: str, version_id: str, file_name: str, request: Request
-    ):
-        def return_origin_response():
-            url = f"https://cdn.modrinth.com/data/{project_id}/versions/{version_id}/{file_name}"
-            FILE_CDN_FORWARD_TO_ORIGIN_COUNT.labels("modrinth").inc()
-            return RedirectResponse(
-                url=url,
-                headers={"Cache-Control": f"public, age={3600*24*1}"},
-                status_code=302,
-            )
 
-        async def return_open93home_response(sha1: str, request: Request):
-            file_cdn_model: Optional[cdnFile] = (
-                await request.app.state.aio_mongo_engine.find_one(
-                    cdnFile, cdnFile.sha1 == sha1
-                )
-            )
-            if file_cdn_model:
-                return RedirectResponse(
-                    url=f"{mcim_config.open93home_endpoint}/{file_cdn_model.path}",
-                    headers={"Cache-Control": f"public, age={3600*24*7}"},
-                    status_code=301,
-                )
+    async def return_open93home_response(sha1: str, request: Request) -> Optional[RedirectResponse]:
+        # 重新检查 cdnFile
+        # file_cdn_model: Optional[cdnFile] = (
+        #     await request.app.state.aio_mongo_engine.find_one(
+        #         cdnFile, cdnFile.sha1 == sha1
+        #     )
+        # )
+        # if file_cdn_model:
+        #     return RedirectResponse(
+        #         url=f"{mcim_config.open93home_endpoint}/{file_cdn_model.path}",
+        #         headers={"Cache-Control": f"public, age={3600*24*7}"},
+        #         status_code=301,
+        #     )
 
-        file: Optional[mrFile] = await request.app.state.aio_mongo_engine.find_one(
-            mrFile,
-            query.and_(
-                mrFile.project_id == project_id,
-                mrFile.version_id == version_id,
-                mrFile.filename == file_name,
-            ),
+        # 信任 file_cdn_cached 则不再检查
+        # 在调用该函数之前应该已经检查过 file_cdn_cached 为 True
+        return RedirectResponse(
+            # url=f"{mcim_config.open93home_endpoint}/{file_cdn_model.path}",
+            url = f"{mcim_config.open93home_endpoint}/{sha1}", # file_cdn_model.path 实际上是 sha1
+            headers={"Cache-Control": f"public, age={3600*24*7}"},
+            status_code=301,
         )
-        if file:
-            if file.size <= MAX_LENGTH:
-                sha1 = file.hashes.sha1
-                if FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.OPEN93HOME:
-                    open93home_response = await return_open93home_response(
-                        sha1, request
-                    )
-                    if open93home_response:
-                        FILE_CDN_FORWARD_TO_OPEN93HOME_COUNT.labels("modrinth").inc()
-                        return open93home_response
-                    else:
-                        log.warning(f"Open93Home not found {sha1}")
-                        return return_origin_response()
-                else:  # FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.ORIGIN: # default
-                    return return_origin_response()
-        else:
-            # 文件信息不存在
-            await add_modrinth_project_ids_to_queue(project_ids=[project_id])
-            log.debug(f"Project {project_id} add to queue.")
 
+    if not mcim_config.file_cdn:
         return return_origin_response()
 
-    # curseforge | example: https://edge.forgecdn.net/files/3040/523/jei_1.12.2-4.16.1.301.jar
-    @file_cdn_router.get("/files/{fileid1}/{fileid2}/{file_name}", tags=["curseforge"])
-    @cache(
-        expire=(
-            _93ATHOME_MAX_AGE
-            if FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.ORIGIN
-            else MAX_AGE
-        )
+    file: Optional[mrFile] = await request.app.state.aio_mongo_engine.find_one(
+        mrFile,
+        query.and_(
+            mrFile.project_id == project_id,
+            mrFile.version_id == version_id,
+            mrFile.filename == file_name,
+        ),
     )
-    async def get_curseforge_file(
-        fileid1: int, fileid2: int, file_name: str, request: Request
-    ):
-        def return_origin_response():
-            url = f"https://edge.forgecdn.net/files/{fileid1}/{fileid2}/{file_name}"
-            FILE_CDN_FORWARD_TO_ORIGIN_COUNT.labels("curseforge").inc()
-            return RedirectResponse(
-                url=url,
-                headers={"Cache-Control": f"public, age={3600*24*7}"},
-                status_code=302,
-            )
-
-        async def return_open93home_response(sha1: str, request: Request):
-            file_cdn_model: Optional[cdnFile] = (
-                await request.app.state.aio_mongo_engine.find_one(
-                    cdnFile, cdnFile.sha1 == sha1
+    if file:
+        if file.size <= MAX_LENGTH and file.file_cdn_cached: # 检查 file_cdn_cached
+            sha1 = file.hashes.sha1
+            if FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.OPEN93HOME:
+                open93home_response = await return_open93home_response(
+                    sha1, request
                 )
-            )
-            if file_cdn_model:
-                return RedirectResponse(
-                    url=f"{mcim_config.open93home_endpoint}/{file_cdn_model.path}",
-                    headers={"Cache-Control": f"public, age={3600*24*7}"},
-                    status_code=301,
-                )
-
-        fileid = int(f"{fileid1}{fileid2}")
-        file: Optional[cfFile] = await request.app.state.aio_mongo_engine.find_one(
-            cfFile,
-            query.and_(
-                cfFile.id == fileid, cfFile.fileName == file_name
-            ),
-        )
-        if file:  # 数据库中有文件
-            if file.fileLength <= MAX_LENGTH:
-                sha1 = (
-                    file.hashes[0].value
-                    if file.hashes[0].algo == 1
-                    else file.hashes[1].value
-                )
-
-                if FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.OPEN93HOME:
-                    open93home_response = await return_open93home_response(
-                        sha1, request
-                    )
-                    if open93home_response:
-                        FILE_CDN_FORWARD_TO_OPEN93HOME_COUNT.labels("curseforge").inc()
-                        return open93home_response
-                    else:
-                        log.warning(f"Open93Home not found {sha1}")
-                        return return_origin_response()
-                else:  # FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.ORIGIN:
+                if open93home_response:
+                    FILE_CDN_FORWARD_TO_OPEN93HOME_COUNT.labels("modrinth").inc()
+                    return open93home_response
+                else:
+                    log.warning(f"Open93Home not found {sha1}")
                     return return_origin_response()
-            else:
-                log.debug(
-                    f"File {fileid} is too large, {file.fileLength} > {MAX_LENGTH}"
-                )
-        else:
-            if fileid >= 530000:
-                await add_curseforge_fileIds_to_queue(fileIds=[fileid])
-                log.debug(f"FileId {fileid} add to queue.")
+            else:  # FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.ORIGIN: # default
+                return return_origin_response()
+    else:
+        # 文件信息不存在
+        await add_modrinth_project_ids_to_queue(project_ids=[project_id])
+        log.debug(f"Project {project_id} add to queue.")
 
-        return return_origin_response()
+    return return_origin_response()
+
+# curseforge | example: https://edge.forgecdn.net/files/3040/523/jei_1.12.2-4.16.1.301.jar
+@file_cdn_router.get("/files/{fileid1}/{fileid2}/{file_name}", tags=["curseforge"])
+@cache(
+    expire=(
+        _93ATHOME_MAX_AGE
+        if FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.ORIGIN
+        else MAX_AGE
+    )
+)
+async def get_curseforge_file(
+    fileid1: int, fileid2: int, file_name: str, request: Request
+):
+    def return_origin_response():
+        url = f"https://edge.forgecdn.net/files/{fileid1}/{fileid2}/{file_name}"
+        FILE_CDN_FORWARD_TO_ORIGIN_COUNT.labels("curseforge").inc()
+        return RedirectResponse(
+            url=url,
+            headers={"Cache-Control": f"public, age={3600*24*7}"},
+            status_code=302,
+        )
+
+    async def return_open93home_response(sha1: str, request: Request):
+        # file_cdn_model: Optional[cdnFile] = (
+        #     await request.app.state.aio_mongo_engine.find_one(
+        #         cdnFile, cdnFile.sha1 == sha1
+        #     )
+        # )
+        # if file_cdn_model:
+        #     return RedirectResponse(
+        #         url=f"{mcim_config.open93home_endpoint}/{file_cdn_model.path}",
+        #         headers={"Cache-Control": f"public, age={3600*24*7}"},
+        #         status_code=301,
+        #     )
+
+        # 信任 file_cdn_cached 则不再检查
+        # 在调用该函数之前应该已经检查过 file_cdn_cached 为 True
+        return RedirectResponse(
+            # url=f"{mcim_config.open93home_endpoint}/{file_cdn_model.path}",
+            url = f"{mcim_config.open93home_endpoint}/{sha1}", # file_cdn_model.path 实际上是 sha1
+            headers={"Cache-Control": f"public, age={3600*24*7}"},
+            status_code=301,
+        )
+
+    fileid = int(f"{fileid1}{fileid2}")
+    file: Optional[cfFile] = await request.app.state.aio_mongo_engine.find_one(
+        cfFile,
+        query.and_(
+            cfFile.id == fileid, cfFile.fileName == file_name
+        ),
+    )
+    if file:  # 数据库中有文件
+        if file.fileLength <= MAX_LENGTH and file.file_cdn_cached:
+            sha1 = (
+                file.hashes[0].value
+                if file.hashes[0].algo == 1
+                else file.hashes[1].value
+            )
+
+            if FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.OPEN93HOME:
+                open93home_response = await return_open93home_response(
+                    sha1, request
+                )
+                if open93home_response:
+                    FILE_CDN_FORWARD_TO_OPEN93HOME_COUNT.labels("curseforge").inc()
+                    return open93home_response
+                else:
+                    log.warning(f"Open93Home not found {sha1}")
+                    return return_origin_response()
+            else:  # FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.ORIGIN:
+                return return_origin_response()
+        else:
+            log.debug(
+                f"File {fileid} is too large, {file.fileLength} > {MAX_LENGTH}"
+            )
+    else:
+        if fileid >= 530000:
+            await add_curseforge_fileIds_to_queue(fileIds=[fileid])
+            log.debug(f"FileId {fileid} add to queue.")
+
+    return return_origin_response()
 
 
 @file_cdn_router.get("/file_cdn/list", include_in_schema=False)
