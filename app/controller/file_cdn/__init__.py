@@ -196,6 +196,9 @@ async def get_curseforge_file(
             headers={"Cache-Control": f"public, age={3600*24*7}"},
             status_code=301,
         )
+    
+    if not mcim_config.file_cdn:
+        return return_origin_response()
 
     fileid = int(f"{fileid1}{fileid2}")
     file: Optional[cfFile] = await request.app.state.aio_mongo_engine.find_one(
