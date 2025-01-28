@@ -19,7 +19,7 @@ FILE_CDN_FORWARD_TO_OPEN93HOME_COUNT = Counter(
     registry=APP_REGISTRY,
 )
 
-TRUSTABLE_RESPONSE_GAUGE = Gauge(
+TRUSTABLE_RESPONSE_GAUGE = Counter(
     "trustable_response",
     "Trustable response",
     labelnames=("route",),
@@ -27,14 +27,6 @@ TRUSTABLE_RESPONSE_GAUGE = Gauge(
     multiprocess_mode="livesum",
 )
 
-# useless
-# REDIS_CACHE_HIT_GAUGE = Gauge(
-#     "redis_cache_hit",
-#     "Redis cache hit",
-#     labelnames=("func",),
-#     registry=APP_REGISTRY,
-#     multiprocess_mode="livesum",
-# )
 
 
 def init_prometheus_metrics(app: FastAPI):
