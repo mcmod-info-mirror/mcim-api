@@ -95,7 +95,7 @@ WELCOME_MESSAGE = {
         "Docs": [
             "https://mod.mcimirror.top/docs",
         ],
-        "Github": "https://github.com/mcmod-info-mirror/mcim",
+        "Github": "https://github.com/mcmod-info-mirror",
         "contact": {"Email": "z0z0r4@outlook.com", "QQ": "3531890582"},
     },
 }
@@ -105,7 +105,7 @@ WELCOME_MESSAGE = {
     "/",
     responses={
         200: {
-            "description": "MCIM API status",
+            "description": "MCIM API",
             "content": {
                 "APPlication/json": {
                     "example": WELCOME_MESSAGE,
