@@ -68,23 +68,12 @@ class TrustableResponse(BaseResponse):
         )
 
 
-class UncachedResponse(BaseResponse):
+class UncachedResponse(Response):
     """
     A response that indicates that the content is not cached.
     """
 
     def __init__(self, status_code: int = 404, headers: dict = {}):
-        headers = {"Trustable": "False"}
-
-        super().__init__(status_code=status_code, headers=headers)
-
-
-class ForceSyncResponse(BaseResponse):
-    """
-    A response that indicates that the content is not cached.
-    """
-
-    def __init__(self, status_code: int = 202):
         headers = {"Trustable": "False"}
 
         super().__init__(status_code=status_code, headers=headers)
