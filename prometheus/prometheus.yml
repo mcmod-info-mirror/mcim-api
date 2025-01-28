@@ -13,7 +13,13 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:8000']
 
-  - job_name: localhost
+  - job_name: 'Node Exporter Full'
     scrape_interval: 5s
     static_configs:
     - targets: ['localhost:9100']
+
+  - job_name: 'nginx-module-vts'
+    scrape_interval: 5s
+    etrics_path: /status/format/prometheus
+    static_configs:
+    - targets: ['localhost']
