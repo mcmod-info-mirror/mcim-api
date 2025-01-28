@@ -19,9 +19,16 @@ FILE_CDN_FORWARD_TO_OPEN93HOME_COUNT = Counter(
     registry=APP_REGISTRY,
 )
 
-TRUSTABLE_RESPONSE_GAUGE = Counter(
+TRUSTABLE_RESPONSE_COUNT = Counter(
     "trustable_response",
-    "Trustable response",
+    "Trustable response count",
+    labelnames=("route",),
+    registry=APP_REGISTRY,
+)
+
+UNRELIABLE_RESPONSE_COUNT = Counter(
+    "unreliable_response",
+    "Unreliable response count",
     labelnames=("route",),
     registry=APP_REGISTRY,
 )

@@ -5,7 +5,7 @@
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.utils.metric import TRUSTABLE_RESPONSE_GAUGE
+from app.utils.metric import TRUSTABLE_RESPONSE_COUNT, UNRELIABLE_RESPONSE_COUNT
 
 
 class CountTrustableMiddleware(BaseHTTPMiddleware):
@@ -18,7 +18,7 @@ class CountTrustableMiddleware(BaseHTTPMiddleware):
         route = request.scope.get("route")
         if route:
             if response.headers.get("Trustable") == "True":
-                TRUSTABLE_RESPONSE_GAUGE.labels(route=route.name).inc()
+                TRUSTABLE_RESPONSE_COUNT.labels(route=route.name).inc()
             else:
-                TRUSTABLE_RESPONSE_GAUGE.labels(route=route.name).dec()
+                UNRELIABLE_RESPONSE_COUNT.labels(route=route.name).inc()
         return response
