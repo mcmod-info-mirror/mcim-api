@@ -40,12 +40,12 @@ def test_modrinth_file_cdn(client: TestClient):
 
 def test_curseforge_file_cdn(client: TestClient):
     for url in cached_curseforge_sample:
-        response = client.get(url)
+        response = client.get(url, follow_redirects=False)
         assert 300 <= response.status_code <= 400
         assert response.headers.get("Location") is not None
 
     for url in uncached_curseforge_sample:
-        response = client.get(url)
+        response = client.get(url, follow_redirects=False)
         assert 300 <= response.status_code <= 400
         assert response.headers.get("Location") is not None
 
