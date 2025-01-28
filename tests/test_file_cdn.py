@@ -5,8 +5,8 @@ from app.config import MCIMConfig
 mcim_config = MCIMConfig.load()
 
 cached_modrinth_sample = [
-    "/data/Ua7DFN59/versions/xET3UZBe/YungsApi-1.19.2-Forge-3.8.2.jar",
-    "/data/Ua7DFN59/versions/k1OTLc33/YungsApi-1.20-Fabric-4.0.4.jar",
+    "/data/Ua7DFN59/versions/xET3UZBe/YungsApi-1.19.2-Forge-3.8.2.jar", # 627c93adb68e04ffb390ad0e5dbf62d342f27a28
+    "/data/Ua7DFN59/versions/k1OTLc33/YungsApi-1.20-Fabric-4.0.4.jar", # d3bcef6c363422b38cbd0298af63a27b5e75829d
 ]
 
 uncached_modrinth_sample = [
@@ -15,13 +15,13 @@ uncached_modrinth_sample = [
 ]
 
 cached_curseforge_sample = [
-    "/files/6000/80/sodium-fabric-0.6.5%2Bmc1.21.1.jar",
-    "/files/5217/345/Vanilla-Expanded-1.20.1-forge.jar",
+    "/files/6000/080/sodium-fabric-0.6.5%2Bmc1.21.1.jar", # 68469cfbcb1b7fcdb0d11c8b984a657adfac5684
+    "/files/5217/345/Vanilla-Expanded-1.20.1-forge.jar", # aa1a508fa088116e4cf8a96c0b56dbadbe99e079
 ]
 
 uncached_curseforge_sample = [
     "/files/4706/778/cinderextras53g.jar",
-    "/files/5529/108/tacz-1.18.2-1.0.2-release.ja",
+    "/files/5529/108/tacz-1.18.2-1.0.2-release.jar",
 ]
 
 
