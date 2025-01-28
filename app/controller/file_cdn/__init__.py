@@ -228,7 +228,7 @@ async def get_curseforge_file(
             else:  # FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.ORIGIN:
                 return return_origin_response()
         else:
-            log.debug(
+            log.trace(
                 f"File {fileid} is too large, {file.fileLength} > {MAX_LENGTH}"
             )
     else:
