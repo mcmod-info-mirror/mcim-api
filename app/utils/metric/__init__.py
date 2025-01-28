@@ -24,7 +24,6 @@ TRUSTABLE_RESPONSE_GAUGE = Counter(
     "Trustable response",
     labelnames=("route",),
     registry=APP_REGISTRY,
-    multiprocess_mode="livesum",
 )
 
 
