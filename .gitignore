@@ -17,7 +17,7 @@ __pycache__
 
 /curseforge
 /modrinth
-/data
 test.py
 /aria2c
 .vscode/settings.json
+.coverage
