@@ -18,7 +18,7 @@ from app.database._redis import (
 from app.utils.response_cache import Cache
 from app.utils.response_cache import cache
 from app.utils.response import BaseResponse
-from app.utils.middleware import ForceSyncMiddleware, TimingMiddleware, EtagMiddleware, CountTrustableMiddleware, UncachePOSTMiddleware
+from app.utils.middleware import TimingMiddleware, EtagMiddleware, CountTrustableMiddleware, UncachePOSTMiddleware
 from app.utils.metric import init_prometheus_metrics
 
 mcim_config = MCIMConfig.load()
@@ -58,9 +58,6 @@ APP.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # 计时中间件
 APP.add_middleware(TimingMiddleware)
-
-# 强制同步中间件 force=True
-# APP.add_middleware(ForceSyncMiddleware)
 
 # # Etag 中间件
 # APP.add_middleware(EtagMiddleware)
