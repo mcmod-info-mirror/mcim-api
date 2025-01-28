@@ -26,6 +26,7 @@ import-data:
     mongoimport --db mcim_backend --collection curseforge_files --file ./data/curseforge_files.json --jsonArray
     mongoimport --db mcim_backend --collection curseforge_fingerprints --file ./data/curseforge_fingerprints.json --jsonArray
     mongoimport --db mcim_backend --collection curseforge_categories --file ./data/curseforge_categories.json --jsonArray
+    mongoimport --db mcim_backend --collection file_cdn_files --file ./data/file_cdn_files.json --jsonArray
 
 ci-install:
     pip install -r requirements.txt
