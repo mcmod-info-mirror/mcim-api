@@ -90,7 +90,7 @@ async def check_search_result(request: Request, res: dict):
             await add_curseforge_modIds_to_queue(modIds=list(not_found_modids))
             log.debug(f"modIds: {not_found_modids} not found, add to queue.")
         else:
-            log.debug(f"All Mod: {not_found_modids} found.")
+            log.debug(f"All Mods have been found.")
     else:
         log.debug("Search esult is empty")
 
