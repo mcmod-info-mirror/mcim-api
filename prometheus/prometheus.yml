@@ -20,6 +20,6 @@ scrape_configs:
 
   - job_name: 'nginx-module-vts'
     scrape_interval: 5s
-    etrics_path: /status/format/prometheus
+    metrics_path: /status/format/prometheus
     static_configs:
     - targets: ['localhost']
