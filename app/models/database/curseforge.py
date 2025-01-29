@@ -37,7 +37,7 @@ class Logo(BaseModel):
     url: Optional[str] = None
 
 
-class Category(BaseModel):
+class CategoryInfo(BaseModel):
     id: Optional[int] = None
     gameId: Optional[int] = None
     name: Optional[str] = None
@@ -163,7 +163,7 @@ class Mod(Model):
     downloadCount: Optional[int] = None
     isFeatured: Optional[bool] = None
     primaryCategoryId: Optional[int] = None
-    categories: Optional[List[Category]] = None
+    categories: Optional[List[CategoryInfo]] = None
     classId: Optional[int] = None
     authors: Optional[List[Author]] = None
     logo: Optional[Logo] = None
