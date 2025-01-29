@@ -37,11 +37,11 @@ class Logo(BaseModel):
     url: Optional[str] = None
 
 
-class Category(BaseModel):
+class CategoryInfo(BaseModel):
     id: Optional[int] = None
     gameId: Optional[int] = None
     name: Optional[str] = None
-    slug: Optional[str] = None
+    slug: Optional[str] = None  # stupid curseforge dev | For id 4591 and 236, slug is None
     url: Optional[str] = None
     iconUrl: Optional[str] = None
     dateModified: Optional[datetime] = None
@@ -163,7 +163,7 @@ class Mod(Model):
     downloadCount: Optional[int] = None
     isFeatured: Optional[bool] = None
     primaryCategoryId: Optional[int] = None
-    categories: Optional[List[Category]] = None
+    categories: Optional[List[CategoryInfo]] = None
     classId: Optional[int] = None
     authors: Optional[List[Author]] = None
     logo: Optional[Logo] = None
@@ -214,7 +214,7 @@ class Category(Model):
     id: int = Field(primary_field=True, index=True)
     gameId: int
     name: str
-    slug: str
+    slug: Optional[str] = None  # stupid curseforge dev | For id 4591 and 236, slug is None
     url: str
     iconUrl: str
     dateModified: str
