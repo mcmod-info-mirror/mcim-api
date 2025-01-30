@@ -16,6 +16,14 @@ mcim_config = MCIMConfig.load()
 # 清空 root 日志器的 handlers
 logging.root.handlers = []
 
+LOGGING_FORMAT = "<green>{time:YYYYMMDD HH:mm:ss}</green> | "  # 颜色>时间
+"{process.name} | "  # 进程名
+"{thread.name} | "  # 进程名
+"<cyan>{module}</cyan>.<cyan>{function}</cyan> | "  # 模块名.方法名
+":<cyan>{line}</cyan> | "  # 行号
+"<level>{level}</level>: "  # 等级
+"<level>{message}</level>"  # 日志内容
+
 # 定义一个拦截标准日志的处理器
 class InterceptHandler(logging.Handler):
     def emit(self, record):
@@ -36,10 +44,11 @@ logger.remove()
 logger.add(
     sys.stdout,
     level="DEBUG" if mcim_config.debug else "INFO",
-    format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{module}</cyan>.<cyan>{function}</cyan>.<cyan>{line}</cyan> | <cyan>{message}</cyan>",
+    format=LOGGING_FORMAT,
     # colorize=True,
     # backtrace=True,
     # diagnose=True,
+    serialize=True,
 )
 
 # 拦截标准日志并重定向到 Loguru
