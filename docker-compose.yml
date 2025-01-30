@@ -1,8 +1,16 @@
-x-logging: &default-logging
-  driver: "local"
+# x-logging: &default-logging
+#   driver: "local"
+#   options:
+#     max-size: "20m"
+#     max-file: "3"
+
+x-logging: &loki-logging
+  driver: loki
   options:
+    loki-url: "http://localhost:3100/loki/api/v1/push"
     max-size: "20m"
     max-file: "3"
+    keep-file: true
 
 services:
   mongodb:
@@ -21,11 +29,12 @@ services:
     # 宿主机硬盘目录映射容器内的存放数据的目录
     volumes:
       - /data/db:/data/db
-      - /opt/mcim/config/mongod.conf:/etc/mongod.conf
+      - ./config/mongod.conf:/etc/mongod.conf
 
     command:
       - "--bind_ip_all"
-    logging: *default-logging
+    # logging: *default-logging
+    logging: *loki-logging
     deploy:
       resources:
         limits:
@@ -39,9 +48,10 @@ services:
     ports:
       - 6379:6379
     restart: always
-    logging: *default-logging
+    # logging: *default-logging
+    logging: *loki-logging
     volumes: 
-      - /opt/mcim/config/redis.conf:/etc/redis/redis.conf
+      - ./config/redis.conf:/etc/redis/redis.conf
     command: redis-server /etc/redis/redis.conf
     deploy:
       resources:
@@ -64,8 +74,7 @@ services:
   #     - mongodb
   #     - redis
   #   volumes:
-  #     - /opt/mcim/config:/config
-  #     - /opt/mcim/logs:/logs
+  #     - ./config:/config
 
   mcim_api_gunicorn:
     container_name: mcim_api_gunicorn
@@ -83,76 +92,16 @@ services:
       - mongodb
       - redis
     volumes:
-      - /opt/mcim/config:/app/config
+      - ./config:/app/config
     command: >
       sh -c "rm -rf /tmp/prometheus &&
             mkdir -p /tmp/prometheus &&
             gunicorn -k uvicorn.workers.UvicornWorker -c gunicorn_config.py app:APP"
-    logging: *default-logging
+    # logging: *default-logging
+    logging: *loki-logging
     deploy:
       resources:
         limits:
           memory: 800M
         reservations:
           memory: 200M
-
-  # tc:
-  #   image: "${DOCKER_IMAGE_TERMINAL:-lukaszlach/docker-tc}"
-  #   container_name: docker-tc
-  #   cap_add:
-  #     - NET_ADMIN
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #     - /var/docker-tc:/var/docker-tc
-  #   deploy:
-  #     mode: global
-  #     restart_policy:
-  #       condition: any
-  #   environment:
-  #     HTTP_BIND: "${HTTP_BIND:-127.0.0.1}"
-  #     HTTP_PORT: "${HTTP_PORT:-4080}"
-  #   network_mode: host
-
-  grafana:
-    image: grafana/grafana
-    container_name: grafana
-    restart: always
-    depends_on:
-      - prometheus
-    # ports:
-    #   - 3000:3000
-    network_mode: host
-    volumes:
-      - ./grafana/provisioning:/etc/grafana/provisioning
-      - ./grafana_data:/var/lib/grafana
-    env_file:
-      - ./grafana/config.monitoring
-    logging: *default-logging
-
-  prometheus:
-    image: prom/prometheus:latest
-    restart: always
-    container_name: prometheus
-    # ports:
-    #   - 9090:9090
-    network_mode: host
-    volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-
-  node_exporter:
-    image: quay.io/prometheus/node-exporter:latest
-    container_name: node_exporter
-    # ports:
-    #   - 9100:9100
-    network_mode: host
-    command:
-      - '--path.procfs=/host/proc'
-      - '--path.rootfs=/rootfs'
-      - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
-    restart: always
-    volumes:
-      - /:/host:ro,rslave
-      - /proc:/host/proc:ro"
-      - /sys:/host/sys:ro"
-    logging: *default-logging
