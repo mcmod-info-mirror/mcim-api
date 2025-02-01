@@ -7,7 +7,6 @@ import json
 import time
 from datetime import datetime
 
-from app.sync import *
 from app.models.database.modrinth import (
     Project,
     Version,
