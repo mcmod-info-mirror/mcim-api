@@ -112,7 +112,6 @@ class FileInfo(BaseModel):
 class Version(Model):
     id: str = Field(primary_field=True, index=True)
     project_id: str = Field(index=True)
-    slug: Optional[str] = None
     name: Optional[str] = None
     version_number: Optional[str] = None
     changelog: Optional[str] = None

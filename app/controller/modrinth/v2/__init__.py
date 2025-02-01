@@ -185,7 +185,7 @@ async def check_search_result(request: Request, search_result: dict):
             )
             log.debug(f"Projects {not_found_project_ids} not found, add to queue.")
         else:
-            log.debug(f"All Projects have been found.")
+            log.debug("All Projects have been found.")
     else:
         log.debug("Search esult is empty")
 
