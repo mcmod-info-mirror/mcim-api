@@ -175,8 +175,6 @@ class Mod(Model):
     thumbsUpCount: Optional[int] = None
     rating: Optional[int] = None
 
-    translated_summary: Optional[str] = None
-
     sync_at: datetime = Field(default_factory=datetime.utcnow)
 
     model_config = {

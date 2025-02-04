@@ -3,6 +3,7 @@ from typing import Optional
 from app.controller.modrinth import modrinth_router
 from app.controller.curseforge import curseforge_router
 from app.controller.file_cdn import file_cdn_router
+from app.controller.translate import translate_router
 from app.config import MCIMConfig
 from app.utils.loger import log
 from app.models.database.modrinth import (
@@ -25,6 +26,7 @@ controller_router = APIRouter()
 controller_router.include_router(curseforge_router)
 controller_router.include_router(modrinth_router)
 controller_router.include_router(file_cdn_router)
+controller_router.include_router(translate_router)
 
 
 @controller_router.get(

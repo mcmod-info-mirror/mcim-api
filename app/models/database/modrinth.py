@@ -62,8 +62,6 @@ class Project(Model):
     loaders: Optional[List[str]] = None
     gallery: Optional[List[GalleryItem]] = None
 
-    translated_description: Optional[str] = None
-
     sync_at: datetime = Field(default_factory=datetime.utcnow)
 
     model_config = {"collection": "modrinth_projects", "title": "Modrinth Project"}
