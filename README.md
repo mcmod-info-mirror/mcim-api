@@ -47,7 +47,43 @@ MCIM 几乎完美兼容官方的 API 结构，可以直接替换 URL，方便迁
 
 ### 简介翻译
 
-在 API 响应中提供额外的简介翻译，见 [translate-mod-summary](https://github.com/mcmod-info-mirror/translate-mod-summary)，当前由于数据丢失暂时不支持
+简介原文来自 Modrinth Project 的 `description` 和 Curseforge Mod 的 `summary` 字段
+
+详情见 [translate-mod-summary](https://github.com/mcmod-info-mirror/translate-mod-summary)，API 详情见[接口文档](https://mod.mcimirror.top/docs#/translate)
+
+#### Modrinth
+
+POST `https://mod.mcimirror.top/translate/modrinth`
+
+URL 参数：`project_id`
+
+例如 <https://mod.mcimirror.top/translate/modrinth?project_id=P7dR8mSH>
+
+```json
+{
+  "project_id": "P7dR8mSH",
+  "translated": "轻量级且模块化的API，为使用Fabric工具链的模组提供了常见的钩子功能和互操作性措施。",
+  "original": "Lightweight and modular API providing common hooks and intercompatibility measures utilized by mods using the Fabric toolchain.",
+  "translated_at": "2025-02-02T08:53:28.638000"
+}
+```
+
+#### Curseforge
+
+POST `https://mod.mcimirror.top/translate/curseforge`
+
+URL 参数：`modId`
+
+例如 <https://mod.mcimirror.top/translate/curseforge?modId=238222>
+
+```json
+{
+  "modId": 238222,
+  "translated": "查看物品和配方",
+  "original": "View Items and Recipes",
+  "translated_at": "2025-02-02T10:01:52.805000"
+}
+```
 
 ## OpenMCIM
 
@@ -79,6 +115,7 @@ MCIM 几乎完美兼容官方的 API 结构，可以直接替换 URL，方便迁
 - Email: z0z0r4@outlook.com
 - QQ: 3531890582
 - QQ 群聊 [OpenMCIM](https://qm.qq.com/q/ZSN6ilHEwC)
+
 ### 声明
 
 MCIM 是一个镜像服务平台，旨在为中国大陆用户提供稳定的 Mod 信息镜像服务。为维护 Mod 创作者及源站平台的合法权益，MCIM 制定以下协议及处理方式：
@@ -89,11 +126,11 @@ MCIM 是一个镜像服务平台，旨在为中国大陆用户提供稳定的 Mo
 2. **责任免责**  
    MCIM 将尽力确保所镜像信息的完整性、有效性和实时性。然而，对于通过 MCIM 使用的引发的任何纠纷或责任，MCIM 不承担任何法律责任，所有风险由用户自行承担。
 
-4. **禁止二次封装协议**  
+3. **禁止二次封装协议**  
    禁止在 MCIM 上对接口进行二次封装。
 
 如有违反上述内容，MCIM 保留采取必要措施或终止服务的权利。
 
-NOT AN OFFICIAL MINECRAFT SERVICE. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT. 
+NOT AN OFFICIAL MINECRAFT SERVICE. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.
 
 不是 Minecraft 官方服务。未经 Mojang 或 MICROSOFT 批准或与 MOJANG 或 MICROSOFT 相关。
