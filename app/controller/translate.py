@@ -3,7 +3,6 @@ from typing import List, Optional
 
 
 from app.models.database.translate import ModrinthTranslation, CurseForgeTranslation
-from app.utils.loger import log
 from app.utils.response_cache import cache
 from app.utils.response import (
     TrustableResponse,
