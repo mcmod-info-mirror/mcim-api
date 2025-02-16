@@ -4,7 +4,14 @@
 
 为各平台的 Mod 的 API 缓存加速，由 [MCLF-CN #3](https://github.com/MCLF-CN/docs/issues/3) 提议，由[鸣谢列表](#鸣谢)内的各位提供支持~
 
+> [!WARNING]
+> 由于高考，未来半年内也许无人维护。但镜像会继续运行。
+
 已缓存 **绝大多数** 的 Modrinth 和 Curseforge 上的 Minecraft Mod 信息。缓存统计信息见 [mcim-statistics](https://mod.mcimirror.top/statistics)。
+
+> [!WARNING]
+> 由于多种原因，OpenMCIM 已暂停运行，MCIM API 不受影响。文件下载已自动重定向会源站。
+> 高考完后可能后可能重制后投入使用，敬请期待。
 
 效仿 [BMCLAPI](https://bmclapidoc.bangbang93.com) ，当前 OpenMCIM 文件缓存在试运行。**急需节点加入 orz ！详情见 [OpenMCIM 文件分发相关 #91](https://github.com/mcmod-info-mirror/mcim/issues/91)**。
 
@@ -86,6 +93,10 @@ URL 参数：`modId`
 ```
 
 ## OpenMCIM
+
+> [!WARNING]
+> 由于多种原因，OpenMCIM 已暂停运行，MCIM API 不受影响。文件下载已自动重定向会源站。
+> 高考完后可能后可能重制后投入使用，敬请期待。
 
 和 [OpenBMCLAPI](https://github.com/bangbang93/openbmclapi) 需要节点分发文件，**急需节点加入 orz ！** 见 [OpenMCIM 文件分发相关 #91](https://github.com/mcmod-info-mirror/mcim/issues/91)
 
