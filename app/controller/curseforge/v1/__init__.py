@@ -66,11 +66,6 @@ class ModLoaderType(int, Enum):
     NeoForge = 6
 
 
-class SearchResponse(BaseModel):
-    data: List[Mod]
-    pagination: Pagination
-
-
 async def check_search_result(request: Request, res: dict):
     modids = set()
     for mod in res["data"]:
@@ -244,7 +239,9 @@ async def curseforge_mod_files(
     gameVersion: Optional[str] = None,
     modLoaderType: Optional[int] = None,
     index: Optional[int] = 0,
-    pageSize: Optional[int] = 50, # curseforge 官方的 limit 是摆设，启动器依赖此 bug 运行，不能设置 gt...
+    pageSize: Optional[
+        int
+    ] = 50,  # curseforge 官方的 limit 是摆设，启动器依赖此 bug 运行，不能设置 gt...
 ):
     # 定义聚合管道
     match_conditions = {"modId": modId}
@@ -380,7 +377,9 @@ async def curseforge_mod_file_download_url(
     model: Optional[File] = await request.app.state.aio_mongo_engine.find_one(
         File, File.modId == modId, File.id == fileId
     )
-    if model is None or model.downloadUrl is None: # 有 134539+ 的文件没有 downloadCount
+    if (
+        model is None or model.downloadUrl is None
+    ):  # 有 134539+ 的文件没有 downloadCount
         await add_curseforge_fileIds_to_queue(fileIds=[fileId])
         return UncachedResponse()
     return TrustableResponse(
@@ -401,10 +400,10 @@ class fingerprints_item(BaseModel):
 # @cache(expire=mcim_config.expire_second.curseforge.fingerprint)
 async def curseforge_fingerprints(item: fingerprints_item, request: Request):
     trustable = True
-    fingerprints_models: List[Fingerprint] = (
-        await request.app.state.aio_mongo_engine.find(
-            Fingerprint, query.in_(Fingerprint.id, item.fingerprints)
-        )
+    fingerprints_models: List[
+        Fingerprint
+    ] = await request.app.state.aio_mongo_engine.find(
+        Fingerprint, query.in_(Fingerprint.id, item.fingerprints)
     )
     not_match_fingerprints = list(
         set(item.fingerprints)
@@ -454,10 +453,10 @@ async def curseforge_fingerprints(item: fingerprints_item, request: Request):
 # @cache(expire=mcim_config.expire_second.curseforge.fingerprint)
 async def curseforge_fingerprints_432(item: fingerprints_item, request: Request):
     trustable = True
-    fingerprints_models: List[Fingerprint] = (
-        await request.app.state.aio_mongo_engine.find(
-            Fingerprint, query.in_(Fingerprint.id, item.fingerprints)
-        )
+    fingerprints_models: List[
+        Fingerprint
+    ] = await request.app.state.aio_mongo_engine.find(
+        Fingerprint, query.in_(Fingerprint.id, item.fingerprints)
     )
     not_match_fingerprints = list(
         set(item.fingerprints)
@@ -511,23 +510,23 @@ async def curseforge_categories(
     classOnly: Optional[bool] = None,
 ):
     if classId:
-        categories: Optional[List[Category]] = (
-            await request.app.state.aio_mongo_engine.find(
-                Category,
-                query.and_(Category.gameId == gameId, Category.classId == classId),
-            )
+        categories: Optional[
+            List[Category]
+        ] = await request.app.state.aio_mongo_engine.find(
+            Category,
+            query.and_(Category.gameId == gameId, Category.classId == classId),
         )
     elif classOnly:
-        categories: Optional[List[Category]] = (
-            await request.app.state.aio_mongo_engine.find(
-                Category, Category.gameId == gameId, Category.isClass == True
-            )
+        categories: Optional[
+            List[Category]
+        ] = await request.app.state.aio_mongo_engine.find(
+            Category, Category.gameId == gameId, Category.isClass == True
         )
     else:
-        categories: Optional[List[Category]] = (
-            await request.app.state.aio_mongo_engine.find(
-                Category, Category.gameId == gameId
-            )
+        categories: Optional[
+            List[Category]
+        ] = await request.app.state.aio_mongo_engine.find(
+            Category, Category.gameId == gameId
         )
     if not categories:
         return UncachedResponse()
