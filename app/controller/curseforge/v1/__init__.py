@@ -380,7 +380,7 @@ async def curseforge_mod_file_download_url(
     model: Optional[File] = await request.app.state.aio_mongo_engine.find_one(
         File, File.modId == modId, File.id == fileId
     )
-    if model is None:
+    if model is None or model.downloadUrl is None: # 有 134539+ 的文件没有 downloadCount
         await add_curseforge_fileIds_to_queue(fileIds=[fileId])
         return UncachedResponse()
     return TrustableResponse(
