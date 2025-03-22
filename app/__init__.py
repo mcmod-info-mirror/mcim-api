@@ -43,7 +43,8 @@ async def lifespan(app: FastAPI):
 
 APP = FastAPI(
     title="MCIM",
-    description="这是一个为 Mod 信息加速的 API<br />你不应该直接浏览器中测试接口，有 UA 限制",
+    # description="这是一个为 Mod 信息加速的 API<br />你不应该直接浏览器中测试接口，有 UA 限制",
+    description="这是一个为 Mod 信息加速的 API",
     lifespan=lifespan,
 )
 
