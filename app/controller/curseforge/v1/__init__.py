@@ -244,7 +244,7 @@ async def curseforge_mod_files(
     gameVersion: Optional[str] = None,
     modLoaderType: Optional[int] = None,
     index: Optional[int] = 0,
-    pageSize: Optional[int] = 50,
+    pageSize: Optional[int] = 50, # curseforge 官方的 limit 是摆设，启动器依赖此 bug 运行，不能设置 gt...
 ):
     # 定义聚合管道
     match_conditions = {"modId": modId}
