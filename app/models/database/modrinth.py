@@ -88,8 +88,8 @@ class File(Model):
     size: int
     file_type: Optional[str] = None
 
-    version_id: Optional[str]  #  = Field(index=True)  # 有可能没有该 file...
-    project_id: Optional[str]  #  = Field(index=True)
+    version_id: str
+    project_id: str
 
     file_cdn_cached: Optional[bool] = False
 
