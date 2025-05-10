@@ -35,6 +35,8 @@ class FileCDNRedirectMode(str, Enum):
     ORIGIN = "origin"
     # 重定向到 open93home
     OPEN93HOME = "open93home"
+    # 重定向到 pysio
+    PYSIO = "pysio"
 
 
 class MCIMConfigModel(BaseModel):
@@ -56,6 +58,9 @@ class MCIMConfigModel(BaseModel):
 
     redis_cache: bool = True
     open93home_endpoint: str = "http://open93home"
+
+    # pysio
+    pysio_endpoint: str = "https://pysio.online"
 
     expire_second: ExpireSecond = ExpireSecond()
 
