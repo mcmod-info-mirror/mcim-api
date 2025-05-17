@@ -26,7 +26,7 @@ from app.sync_queue.modrinth import (
     add_modrinth_version_ids_to_queue,
     add_modrinth_hashes_to_queue,
 )
-from app.config.mcim import MCIMConfig
+from app.config import config_manager
 from app.utils.response import (
     TrustableResponse,
     UncachedResponse,
@@ -36,7 +36,7 @@ from app.utils.network import request as request_async
 from app.utils.loger import log
 from app.utils.response_cache import cache
 
-mcim_config = MCIMConfig.load()
+mcim_config = config_manager.mcim_config
 
 API = mcim_config.modrinth_api
 v2_router = APIRouter(prefix="/v2", tags=["modrinth"])

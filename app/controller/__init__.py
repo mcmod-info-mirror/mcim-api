@@ -4,7 +4,7 @@ from app.controller.modrinth import modrinth_router
 from app.controller.curseforge import curseforge_router
 from app.controller.file_cdn import file_cdn_router
 from app.controller.translate import translate_router
-from app.config import MCIMConfig
+from app.config import config_manager
 from app.utils.loger import log
 from app.models.database.modrinth import (
     Project as ModrinthProject,
@@ -20,7 +20,7 @@ from app.models.database.file_cdn import File as FileCDNFile
 from app.utils.response import BaseResponse
 from app.utils.response_cache import cache
 
-mcim_config = MCIMConfig.load()
+mcim_config = config_manager.mcim_config
 
 controller_router = APIRouter()
 controller_router.include_router(curseforge_router)

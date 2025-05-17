@@ -1,12 +1,7 @@
-import json
-import os
-from pydantic import BaseModel, ValidationError, validator
+from pydantic import BaseModel
 
-from .constants import CONFIG_PATH
-
-# MONGODB config path
-MONGODB_CONFIG_PATH = os.path.join(CONFIG_PATH, "mongodb.json")
-
+from app.config.base import BaseConfig
+from app.config.constants import MONGODB_CONFIG_PATH
 
 class MongodbConfigModel(BaseModel):
     host: str = "mongodb"
@@ -17,19 +12,24 @@ class MongodbConfigModel(BaseModel):
     database: str = "database"
 
 
-class MongodbConfig:
-    @staticmethod
-    def save(
-        model: MongodbConfigModel = MongodbConfigModel(), target=MONGODB_CONFIG_PATH
-    ):
-        with open(target, "w") as fd:
-            json.dump(model.model_dump(), fd, indent=4)
+# class MongodbConfig:
+#     @staticmethod
+#     def save(
+#         model: MongodbConfigModel = MongodbConfigModel(), target=MONGODB_CONFIG_PATH
+#     ):
+#         with open(target, "w") as fd:
+#             json.dump(model.model_dump(), fd, indent=4)
 
-    @staticmethod
-    def load(target=MONGODB_CONFIG_PATH) -> MongodbConfigModel:
-        if not os.path.exists(target):
-            MongodbConfig.save(target=target)
-            return MongodbConfigModel()
-        with open(target, "r") as fd:
-            data = json.load(fd)
-        return MongodbConfigModel(**data)
+#     @staticmethod
+#     def load(target=MONGODB_CONFIG_PATH) -> MongodbConfigModel:
+#         if not os.path.exists(target):
+#             MongodbConfig.save(target=target)
+#             return MongodbConfigModel()
+#         with open(target, "r") as fd:
+#             data = json.load(fd)
+#         return MongodbConfigModel(**data)
+
+
+class MongodbConfig(BaseConfig[MongodbConfigModel]):
+    MODEL_CLASS = MongodbConfigModel
+    DEFAULT_CONFIG_PATH = MONGODB_CONFIG_PATH

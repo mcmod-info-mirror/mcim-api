@@ -1,11 +1,4 @@
-from fastapi import Request
-from fastapi.responses import JSONResponse
 from typing import Optional
-
-from app.config.mcim import MCIMConfig
-
-mcim_config = MCIMConfig.load()
-
 
 class UncacheException(Exception):
     def __init__(self, name: str):

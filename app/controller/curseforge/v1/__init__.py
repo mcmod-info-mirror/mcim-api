@@ -23,13 +23,13 @@ from app.models.response.curseforge import (
     FingerprintResponse,
     CaregoriesResponse,
 )
-from app.config.mcim import MCIMConfig
+from app.config import config_manager
 from app.utils.response import TrustableResponse, UncachedResponse, BaseResponse
 from app.utils.network import request as request_async
 from app.utils.loger import log
 from app.utils.response_cache import cache
 
-mcim_config = MCIMConfig.load()
+mcim_config = config_manager.mcim_config
 
 API = mcim_config.curseforge_api
 

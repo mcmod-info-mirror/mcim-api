@@ -10,10 +10,10 @@ import uuid
 from tenacity import retry, stop_after_attempt, retry_if_not_exception_type
 from typing import Optional, Union
 from app.exceptions import ApiException, ResponseCodeException
-from app.config.mcim import MCIMConfig
+from app.config import config_manager
 from app.utils.loger import log
 
-mcim_config = MCIMConfig.load()
+mcim_config = config_manager.mcim_config
 
 
 PROXY: Optional[str] = mcim_config.proxies

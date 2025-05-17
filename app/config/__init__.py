@@ -1,15 +1,11 @@
-import os
-from app.config.constants import CONFIG_PATH
+from app.config.config_manager import config_manager
 from app.config.mcim import MCIMConfig
 from app.config.mongodb import MongodbConfig
-from app.config.redis import RedisdbConfig
+from app.config.redis import RedisConfig
 
 __all__ = [
     "MCIMConfig",
     "MongodbConfig",
-    "RedisdbConfig",
+    "RedisConfig",
+    "config_manager"
 ]
-
-
-if not os.path.exists(CONFIG_PATH):
-    os.makedirs(CONFIG_PATH)

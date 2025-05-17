@@ -1,32 +1,31 @@
 import orjson
 from functools import wraps
-from typing import Optional
+from typing import Optional, Callable, Any, Union
 from fastapi.responses import Response
 from redis.asyncio import Redis
 from app.utils.response_cache.key_builder import default_key_builder, KeyBuilder
 from app.utils.response_cache.resp_builder import ResponseBuilder
 from app.utils.loger import log
-from app.config.redis import RedisdbConfig
-# from app.utils.metric import REDIS_CACHE_HIT_GAUGE
+from app.config import config_manager
 
-redis_config = RedisdbConfig.load()
+redis_config = config_manager.redis_config
 
 
-class Cache:
-    backend: Redis
-    enabled: bool = False
-    namespace: str = "fastapi_cache"
-    key_builder: KeyBuilder = default_key_builder
-
-    @classmethod
+class _Cache:
+    def __init__(self):
+        self.backend = None
+        self.enabled = False
+        self.namespace = "fastapi_cache"
+        self.key_builder = default_key_builder
+    
     def init(
-        cls,
+        self,
         backend: Optional[Redis] = None,
-        enabled: Optional[bool] = False,
-        namespace: Optional[str] = "fastapi_cache",
+        enabled: bool = False,
+        namespace: str = "fastapi_cache",
         key_builder: KeyBuilder = default_key_builder,
     ) -> None:
-        cls.backend = (
+        self.backend = (
             Redis(
                 host=redis_config.host,
                 port=redis_config.port,
@@ -36,34 +35,53 @@ class Cache:
             if backend is None
             else backend
         )
-        cls.enabled = enabled
-        cls.namespace = namespace
-        cls.key_builder = key_builder
+        self.enabled = enabled
+        self.namespace = namespace
+        self.key_builder = key_builder
 
+    def is_enabled(self) -> bool:
+        return self.enabled
 
-def cache(expire: Optional[int] = 60, never_expire: Optional[bool] = False):
+    def enable(self) -> None:
+        self.enabled = True
+    
+    def disable(self) -> None:
+        self.enabled = False
+
+_cache_instance = _Cache()
+
+# 导出缓存装饰器函数
+def cache(
+    expire: int = 60, 
+    never_expire: bool = False
+) -> Callable:
+    """
+    函数结果缓存装饰器
+    
+    Args:
+        expire: 缓存过期时间(秒)
+        never_expire: 设置为True时永不过期
+    """
     if not isinstance(expire, int):
         raise ValueError("expire must be an integer")
-
-    def decorator(func):
+    
+    def decorator(func: Callable) -> Callable:
         @wraps(func)
-        async def wrapper(*args, **kwargs):
-            if kwargs.get("force") is True or not Cache.enabled:
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
+            if kwargs.get("force") is True or not _cache_instance.enabled:
                 return await func(*args, **kwargs)
-            key = default_key_builder(
-                func, namespace=Cache.namespace, args=args, kwargs=kwargs
+                
+            key = _cache_instance.key_builder(
+                func, namespace=_cache_instance.namespace, args=args, kwargs=kwargs
             )
-            value = await Cache.backend.get(key)
+            value = await _cache_instance.backend.get(key)
 
             if value is not None:
                 value = orjson.loads(value)
-                # log.debug(f"Cached response: [{key}]")
                 log.trace(f"Cached response: [{key}]")
-                # REDIS_CACHE_HIT_GAUGE.labels(f'{func.__module__}:{func.__name__}').inc()
                 return ResponseBuilder.decode(value)
 
             result = await func(*args, **kwargs)
-            # REDIS_CACHE_HIT_GAUGE.labels(f'{func.__module__}:{func.__name__}').dec()
             if isinstance(result, Response):
                 if result.status_code >= 400:
                     return result
@@ -74,15 +92,15 @@ def cache(expire: Optional[int] = 60, never_expire: Optional[bool] = False):
                 to_set = ResponseBuilder.encode(result)
             else:
                 return result
+                
             value = orjson.dumps(to_set)
 
             if never_expire:
-                await Cache.backend.set(key, value)
+                await _cache_instance.backend.set(key, value)
             else:
-                await Cache.backend.set(key, value, ex=expire)
-            # log.debug(f"Set cache: [{key}]")
+                await _cache_instance.backend.set(key, value, ex=expire)
+                
             log.trace(f"Set cache: [{key}]")
-
             return result
 
         return wrapper

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request, Query
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.responses import RedirectResponse, Response
 from odmantic import query
 from typing import Optional
 import time
@@ -9,7 +9,7 @@ from email.utils import formatdate
 from app.models.database.curseforge import File as cfFile
 from app.models.database.modrinth import File as mrFile
 from app.models.database.file_cdn import File as cdnFile
-from app.config import MCIMConfig
+from app.config import config_manager
 from app.utils.loger import log
 from app.utils.response_cache import cache
 from app.utils.response import BaseResponse
@@ -24,13 +24,8 @@ from app.utils.metric import (
 )
 from app.config.mcim import FileCDNRedirectMode
 
-
-mcim_config = MCIMConfig.load()
-
 # expire 3h
 file_cdn_router = APIRouter()
-
-FILE_CDN_REDIRECT_MODE = mcim_config.file_cdn_redirect_mode
 
 MAX_AGE = int(60 * 60 * 2.5)
 
@@ -38,9 +33,6 @@ CDN_MAX_AGE = int(60 * 60 * 2.8)
 
 # 这个根本不需要更新，是 sha1 https://files.mcimirror.top/files/mcim/8e7b73b39c0bdae84a4be445027747c9bae935c4
 _93ATHOME_MAX_AGE = int(60 * 60 * 24 * 7)
-
-# 缓存文件大小限制
-MAX_LENGTH = mcim_config.max_file_size
 
 TIMEOUT = 2.5
 
@@ -58,7 +50,7 @@ def get_http_date(delay: int = CDN_MAX_AGE):
 
 
 def file_cdn_check_secret(secret: str):
-    if secret != mcim_config.file_cdn_secret:
+    if secret != config_manager.mcim_config.file_cdn_secret:
         return False
     return True
 
@@ -81,14 +73,14 @@ async def file_cdn_statistics(request: Request):
 @cache(
     expire=(
         _93ATHOME_MAX_AGE
-        if FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.ORIGIN
+        if config_manager.mcim_config.file_cdn_redirect_mode == FileCDNRedirectMode.ORIGIN
         else MAX_AGE
     )
 )
 async def get_modrinth_file(
     project_id: str, version_id: str, file_name: str, request: Request
 ):
-    def get_origin_response() -> RedirectResponse:
+    def get_origin_response(project_id: str, version_id: str, file_name: str) -> RedirectResponse:
         url = f"https://cdn.modrinth.com/data/{project_id}/versions/{version_id}/{file_name}"
         FILE_CDN_FORWARD_TO_ORIGIN_COUNT.labels("modrinth").inc()
         return RedirectResponse(
@@ -97,8 +89,8 @@ async def get_modrinth_file(
             status_code=302,
         )
 
-    async def get_open93home_response(
-        sha1: str, request: Request
+    def get_open93home_response(
+        sha1: str
     ) -> Optional[RedirectResponse]:
         # 重新检查 cdnFile
         # file_cdn_model: Optional[cdnFile] = (
@@ -108,7 +100,7 @@ async def get_modrinth_file(
         # )
         # if file_cdn_model:
         #     return RedirectResponse(
-        #         url=f"{mcim_config.open93home_endpoint}/{file_cdn_model.path}",
+        #         url=f"{config_manager.mcim_config.open93home_endpoint}/{file_cdn_model.path}",
         #         headers={"Cache-Control": f"public, age={3600*24*7}"},
         #         status_code=301,
         #     )
@@ -116,27 +108,27 @@ async def get_modrinth_file(
         # 信任 file_cdn_cached 则不再检查
         # 在调用该函数之前应该已经检查过 file_cdn_cached 为 True
         return RedirectResponse(
-            # url=f"{mcim_config.open93home_endpoint}/{file_cdn_model.path}",
-            url=f"{mcim_config.open93home_endpoint}/{sha1}",  # file_cdn_model.path 实际上是 sha1
+            # url=f"{config_manager.mcim_config.open93home_endpoint}/{file_cdn_model.path}",
+            url=f"{config_manager.mcim_config.open93home_endpoint}/{sha1}",  # file_cdn_model.path 实际上是 sha1
             headers={"Cache-Control": f"public, age={3600 * 24 * 7}"},
             status_code=301,
         )
 
-    async def get_pysio_response(
+    def get_pysio_response(
         project_id: str, version_id: str, file_name: str
     ) -> RedirectResponse:
-        url = f"https://{mcim_config.pysio_endpoint}/data/{project_id}/versions/{version_id}/{file_name}"
+        url = f"https://{config_manager.mcim_config.pysio_endpoint}/data/{project_id}/versions/{version_id}/{file_name}"
         return RedirectResponse(
             url=url,
             headers={"Cache-Control": f"public, age={3600 * 24 * 1}"},
             status_code=302,
         )
 
-    if not mcim_config.file_cdn:
-        return get_origin_response()
-    elif FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.PYSIO:
+    if not config_manager.mcim_config.file_cdn:
+        return get_origin_response(project_id=project_id, version_id=version_id, file_name=file_name)
+    elif config_manager.mcim_config.file_cdn_redirect_mode == FileCDNRedirectMode.PYSIO:
         # Note: Pysio 表示无需筛选，所以直接跳过 file 检索
-        pysio_response = await get_pysio_response()
+        pysio_response = get_pysio_response(project_id=project_id, version_id=version_id, file_name=file_name)
         return pysio_response
 
     file: Optional[mrFile] = await request.app.state.aio_mongo_engine.find_one(
@@ -148,24 +140,24 @@ async def get_modrinth_file(
         ),
     )
     if file:
-        if file.size <= MAX_LENGTH and file.file_cdn_cached:  # 检查 file_cdn_cached
+        if file.size <= config_manager.mcim_config.max_file_size and file.file_cdn_cached:  # 检查 file_cdn_cached
             sha1 = file.hashes.sha1
-            if FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.OPEN93HOME:
-                open93home_response = await get_open93home_response(sha1, request)
+            if config_manager.mcim_config.file_cdn_redirect_mode == FileCDNRedirectMode.OPEN93HOME:
+                open93home_response = get_open93home_response(sha1)
                 if open93home_response:
                     FILE_CDN_FORWARD_TO_OPEN93HOME_COUNT.labels("modrinth").inc()
                     return open93home_response
                 else:
                     log.warning(f"Open93Home not found {sha1}")
-                    return get_origin_response()
-            else:  # FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.ORIGIN: # default
-                return get_origin_response()
+                    return get_origin_response(project_id=project_id, version_id=version_id, file_name=file_name)
+            else:  # config_manager.mcim_config.file_cdn_redirect_mode == FileCDNRedirectMode.ORIGIN: # default
+                return get_origin_response(project_id=project_id, version_id=version_id, file_name=file_name)
     else:
         # 文件信息不存在
         await add_modrinth_project_ids_to_queue(project_ids=[project_id])
         log.debug(f"Project {project_id} add to queue.")
 
-    return get_origin_response()
+    return get_origin_response(project_id=project_id, version_id=version_id, file_name=file_name)
 
 
 # curseforge | example: https://edge.forgecdn.net/files/3040/523/jei_1.12.2-4.16.1.301.jar
@@ -173,15 +165,15 @@ async def get_modrinth_file(
 @cache(
     expire=(
         _93ATHOME_MAX_AGE
-        if FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.ORIGIN
+        if config_manager.mcim_config.file_cdn_redirect_mode == FileCDNRedirectMode.ORIGIN
         else MAX_AGE
     )
 )
 async def get_curseforge_file(
     fileid1: int, fileid2: int, file_name: str, request: Request
 ) -> RedirectResponse:
-    def get_origin_response():
-        url = f"https://edge.forgecdn.net/files/{fileid1}/{fileid2}/{file_name}"
+    def get_origin_response(fileId1: int, fileId2: int, file_name: str) -> RedirectResponse:
+        url = f"https://edge.forgecdn.net/files/{fileId1}/{fileId2}/{file_name}"
         FILE_CDN_FORWARD_TO_ORIGIN_COUNT.labels("curseforge").inc()
         return RedirectResponse(
             url=url,
@@ -189,34 +181,34 @@ async def get_curseforge_file(
             status_code=302,
         )
 
-    async def get_open93home_response(
-        sha1: str, request: Request
+    def get_open93home_response(
+        sha1: str
     ) -> RedirectResponse:
         # 信任 file_cdn_cached 则不再检查
         # 在调用该函数之前应该已经检查过 file_cdn_cached 为 True
         return RedirectResponse(
-            # url=f"{mcim_config.open93home_endpoint}/{file_cdn_model.path}",
-            url=f"{mcim_config.open93home_endpoint}/{sha1}",  # file_cdn_model.path 实际上是 sha1
+            # url=f"{config_manager.mcim_config.open93home_endpoint}/{file_cdn_model.path}",
+            url=f"{config_manager.mcim_config.open93home_endpoint}/{sha1}",  # file_cdn_model.path 实际上是 sha1
             headers={"Cache-Control": f"public, age={3600 * 24 * 7}"},
             status_code=301,
         )
 
     def get_pysio_response(
-        fileId1: int, fileId2: int, file_name: str, request: Request
+        fileId1: int, fileId2: int, file_name: str
     ) -> RedirectResponse:
         # TODO:暂时不做进一步筛选
         return RedirectResponse(
-            url=f"{mcim_config.pysio_endpoint}/files/{fileId1}/{fileId2}/{file_name}",
+            url=f"{config_manager.mcim_config.pysio_endpoint}/files/{fileId1}/{fileId2}/{file_name}",
             headers={"Cache-Control": f"public, age={3600 * 24 * 7}"},
             status_code=301,
         )
 
-    if not mcim_config.file_cdn:
-        origin_response: RedirectResponse = get_origin_response()
+    if not config_manager.mcim_config.file_cdn:
+        origin_response: RedirectResponse = get_origin_response(fileId1=fileid1, fileId2=fileid2, file_name=file_name)
         return origin_response
-    elif FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.PYSIO:
+    elif config_manager.mcim_config.file_cdn_redirect_mode == FileCDNRedirectMode.PYSIO:
         # Note: Pysio 表示无需筛选，所以直接跳过 file 检索
-        pysio_response = await get_pysio_response()
+        pysio_response = get_pysio_response(fileId1=fileid1, fileId2=fileid2, file_name=file_name)
         return pysio_response
 
     fileid = int(f"{fileid1}{fileid2}")
@@ -227,32 +219,32 @@ async def get_curseforge_file(
     )
 
     if file:  # 数据库中有文件
-        if file.fileLength <= MAX_LENGTH and file.file_cdn_cached:
+        if file.fileLength <= config_manager.mcim_config.max_file_size and file.file_cdn_cached:
             sha1 = (
                 file.hashes[0].value
                 if file.hashes[0].algo == 1
                 else file.hashes[1].value
             )
 
-            if FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.OPEN93HOME:
-                open93home_response = await get_open93home_response(sha1, request)
+            if config_manager.mcim_config.file_cdn_redirect_mode == FileCDNRedirectMode.OPEN93HOME:
+                open93home_response = get_open93home_response(sha1, request)
                 if open93home_response:
                     FILE_CDN_FORWARD_TO_OPEN93HOME_COUNT.labels("curseforge").inc()
                     return open93home_response
                 else:
                     log.warning(f"Open93Home not found {sha1}")
-                    return get_origin_response()
-            else:  # FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.ORIGIN:
-                return get_origin_response()
+                    return get_origin_response(fileId1=fileid1, fileId2=fileid2, file_name=file_name)
+            else:  # config_manager.mcim_config.file_cdn_redirect_mode == FileCDNRedirectMode.ORIGIN:
+                return get_origin_response(fileId1=fileid1, fileId2=fileid2, file_name=file_name)
 
         else:
-            log.trace(f"File {fileid} is too large, {file.fileLength} > {MAX_LENGTH}")
+            log.trace(f"File {fileid} is too large, {file.fileLength} > {config_manager.mcim_config.max_file_size}")
     else:
         if fileid >= 530000:
             await add_curseforge_fileIds_to_queue(fileIds=[fileid])
             log.debug(f"FileId {fileid} add to queue.")
 
-    return get_origin_response()
+    return get_origin_response(fileId1=fileid1, fileId2=fileid2, file_name=file_name)
 
 
 @file_cdn_router.get("/file_cdn/list", include_in_schema=False)
@@ -266,10 +258,11 @@ async def list_file_cdn(
         le=10000,
     ),
 ):
-    if not file_cdn_check_secret(secret):
-        return JSONResponse(
+    if not config_manager.mcim_config.file_cdn or not config_manager.mcim_config.file_cdn_redirect_mode == FileCDNRedirectMode.OPEN93HOME or not file_cdn_check_secret(secret):
+        return Response(
             status_code=403, content="Forbidden", headers={"Cache-Control": "no-cache"}
         )
+
     files_collection = request.app.state.aio_mongo_engine.get_collection(cdnFile)
 
     # 动态构建 $match 阶段
@@ -301,7 +294,7 @@ async def check_file_hash_and_size(url: str, hash: str, size: int):
         sha1.update(resp.content)
         log.warning(f"Reported hash: {hash}, calculated hash: {sha1.hexdigest()}")
         return sha1.hexdigest() == hash
-    except ResponseCodeException as e:
+    except ResponseCodeException:
         return False
 
 
@@ -311,8 +304,8 @@ async def report(
     secret: str,
     _hash: str = Query(alias="hash"),
 ):
-    if not file_cdn_check_secret(secret):
-        return JSONResponse(
+    if not config_manager.mcim_config.file_cdn or not config_manager.mcim_config.file_cdn_redirect_mode == FileCDNRedirectMode.OPEN93HOME or not file_cdn_check_secret(secret):
+        return Response(
             status_code=403, content="Forbidden", headers={"Cache-Control": "no-cache"}
         )
 

@@ -2,9 +2,9 @@ from redis import Redis
 from redis.asyncio import Redis as AioRedis
 from app.utils.loger import log
 
-from app.config import RedisdbConfig
+from app.config import config_manager
 
-_redis_config = RedisdbConfig.load()
+_redis_config = config_manager.redis_config
 
 aio_redis_engine: AioRedis = None
 sync_redis_engine: Redis = None

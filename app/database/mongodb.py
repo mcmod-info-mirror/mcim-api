@@ -2,13 +2,13 @@ from odmantic import AIOEngine, SyncEngine
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import MongoClient
 
-from app.config import MongodbConfig
+from app.config import config_manager
 from app.models.database.curseforge import Mod, File, Fingerprint  # , ModFilesSyncInfo
 from app.models.database.modrinth import Project, Version, File as ModrinthFile
 from app.models.database.file_cdn import File as CDNFile
 from app.utils.loger import log
 
-_mongodb_config = MongodbConfig.load()
+_mongodb_config = config_manager.mongodb_config
 
 aio_mongo_engine: AIOEngine = None
 sync_mongo_engine: SyncEngine = None

@@ -1,14 +1,9 @@
-import json
-import os
 from typing import Optional
-from pydantic import BaseModel, ValidationError, validator
+from pydantic import BaseModel
 from enum import Enum
 
-from .constants import CONFIG_PATH
-
-# MCIM config path
-MICM_CONFIG_PATH = os.path.join(CONFIG_PATH, "mcim.json")
-
+from app.config.base import BaseConfig
+from app.config.constants import MICM_CONFIG_PATH
 
 class Curseforge(BaseModel):
     mod: int = 86400
@@ -69,17 +64,6 @@ class MCIMConfigModel(BaseModel):
     )
 
 
-class MCIMConfig:
-    @staticmethod
-    def save(model: MCIMConfigModel = MCIMConfigModel(), target=MICM_CONFIG_PATH):
-        with open(target, "w") as fd:
-            json.dump(model.model_dump(), fd, indent=4)
-
-    @staticmethod
-    def load(target=MICM_CONFIG_PATH) -> MCIMConfigModel:
-        if not os.path.exists(target):
-            MCIMConfig.save(target=target)
-            return MCIMConfigModel()
-        with open(target, "r") as fd:
-            data = json.load(fd)
-        return MCIMConfigModel(**data)
+class MCIMConfig(BaseConfig[MCIMConfigModel]):
+    MODEL_CLASS = MCIMConfigModel
+    DEFAULT_CONFIG_PATH = MICM_CONFIG_PATH
