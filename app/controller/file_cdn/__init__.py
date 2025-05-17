@@ -308,6 +308,34 @@ async def get_curseforge_file(
 #         return Response(
 #             status_code=403, content="Forbidden", headers={"Cache-Control": "no-cache"}
 #         )
+# async def check_file_hash_and_size(url: str, hash: str, size: int):
+#     sha1 = hashlib.sha1()
+#     try:
+#         resp = await request_async(method="GET", url=url, follow_redirects=True)
+#         if (
+#             int(resp.headers["content-length"]) != size
+#         ):  # check size | exapmple a5fb8e2a37f1772312e2c75af2866132ebf97e4f
+#             log.warning(
+#                 f"Reported size: {size}, calculated size: {resp.headers['content-length']}"
+#             )
+#             return False
+#         sha1.update(resp.content)
+#         log.warning(f"Reported hash: {hash}, calculated hash: {sha1.hexdigest()}")
+#         return sha1.hexdigest() == hash
+#     except ResponseCodeException:
+#         return False
+
+
+# @file_cdn_router.get("/file_cdn/report", include_in_schema=False)
+# async def report(
+#     request: Request,
+#     secret: str,
+#     _hash: str = Query(alias="hash"),
+# ):
+#     if not config_manager.mcim_config.file_cdn or not config_manager.mcim_config.file_cdn_redirect_mode == FileCDNRedirectMode.OPEN93HOME or not file_cdn_check_secret(secret):
+#         return Response(
+#             status_code=403, content="Forbidden", headers={"Cache-Control": "no-cache"}
+#         )
 
 #     file: Optional[cdnFile] = await request.app.state.aio_mongo_engine.find_one(
 #         cdnFile, cdnFile.sha1 == _hash
