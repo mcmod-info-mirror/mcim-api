@@ -247,104 +247,104 @@ async def get_curseforge_file(
     return get_origin_response(fileId1=fileid1, fileId2=fileid2, file_name=file_name)
 
 
-@file_cdn_router.get("/file_cdn/list", include_in_schema=False)
-async def list_file_cdn(
-    request: Request,
-    secret: str,
-    last_id: Optional[str] = None,
-    last_modified: Optional[int] = None,
-    page_size: int = Query(
-        default=1000,
-        le=10000,
-    ),
-):
-    if not config_manager.mcim_config.file_cdn or not config_manager.mcim_config.file_cdn_redirect_mode == FileCDNRedirectMode.OPEN93HOME or not file_cdn_check_secret(secret):
-        return Response(
-            status_code=403, content="Forbidden", headers={"Cache-Control": "no-cache"}
-        )
+# @file_cdn_router.get("/file_cdn/list", include_in_schema=False)
+# async def list_file_cdn(
+#     request: Request,
+#     secret: str,
+#     last_id: Optional[str] = None,
+#     last_modified: Optional[int] = None,
+#     page_size: int = Query(
+#         default=1000,
+#         le=10000,
+#     ),
+# ):
+#     if not config_manager.mcim_config.file_cdn or not config_manager.mcim_config.file_cdn_redirect_mode == FileCDNRedirectMode.OPEN93HOME or not file_cdn_check_secret(secret):
+#         return Response(
+#             status_code=403, content="Forbidden", headers={"Cache-Control": "no-cache"}
+#         )
 
-    files_collection = request.app.state.aio_mongo_engine.get_collection(cdnFile)
+#     files_collection = request.app.state.aio_mongo_engine.get_collection(cdnFile)
 
-    # 动态构建 $match 阶段
-    match_stage = {}
-    if last_modified:
-        match_stage["mtime"] = {"$gt": last_modified}
-    if last_id:
-        match_stage["_id"] = {"$gt": last_id}
-    match_stage["disable"] = {"$ne": True}
+#     # 动态构建 $match 阶段
+#     match_stage = {}
+#     if last_modified:
+#         match_stage["mtime"] = {"$gt": last_modified}
+#     if last_id:
+#         match_stage["_id"] = {"$gt": last_id}
+#     match_stage["disable"] = {"$ne": True}
 
-    # 聚合管道
-    pipeline = [{"$match": match_stage}, {"$sort": {"_id": 1}}, {"$limit": page_size}]
+#     # 聚合管道
+#     pipeline = [{"$match": match_stage}, {"$sort": {"_id": 1}}, {"$limit": page_size}]
 
-    results = await files_collection.aggregate(pipeline).to_list(length=None)
-    return BaseResponse(content=results)
-
-
-async def check_file_hash_and_size(url: str, hash: str, size: int):
-    sha1 = hashlib.sha1()
-    try:
-        resp = await request_async(method="GET", url=url, follow_redirects=True)
-        if (
-            int(resp.headers["content-length"]) != size
-        ):  # check size | exapmple a5fb8e2a37f1772312e2c75af2866132ebf97e4f
-            log.warning(
-                f"Reported size: {size}, calculated size: {resp.headers['content-length']}"
-            )
-            return False
-        sha1.update(resp.content)
-        log.warning(f"Reported hash: {hash}, calculated hash: {sha1.hexdigest()}")
-        return sha1.hexdigest() == hash
-    except ResponseCodeException:
-        return False
+#     results = await files_collection.aggregate(pipeline).to_list(length=None)
+#     return BaseResponse(content=results)
 
 
-@file_cdn_router.get("/file_cdn/report", include_in_schema=False)
-async def report(
-    request: Request,
-    secret: str,
-    _hash: str = Query(alias="hash"),
-):
-    if not config_manager.mcim_config.file_cdn or not config_manager.mcim_config.file_cdn_redirect_mode == FileCDNRedirectMode.OPEN93HOME or not file_cdn_check_secret(secret):
-        return Response(
-            status_code=403, content="Forbidden", headers={"Cache-Control": "no-cache"}
-        )
+# async def check_file_hash_and_size(url: str, hash: str, size: int):
+#     sha1 = hashlib.sha1()
+#     try:
+#         resp = await request_async(method="GET", url=url, follow_redirects=True)
+#         if (
+#             int(resp.headers["content-length"]) != size
+#         ):  # check size | exapmple a5fb8e2a37f1772312e2c75af2866132ebf97e4f
+#             log.warning(
+#                 f"Reported size: {size}, calculated size: {resp.headers['content-length']}"
+#             )
+#             return False
+#         sha1.update(resp.content)
+#         log.warning(f"Reported hash: {hash}, calculated hash: {sha1.hexdigest()}")
+#         return sha1.hexdigest() == hash
+#     except ResponseCodeException:
+#         return False
 
-    file: Optional[cdnFile] = await request.app.state.aio_mongo_engine.find_one(
-        cdnFile, cdnFile.sha1 == _hash
-    )
 
-    if file:
-        check_result = await check_file_hash_and_size(
-            url=file.url, hash=_hash, size=file.size
-        )
-        cdnFile_collection = request.app.state.aio_mongo_engine.get_collection(cdnFile)
-        if check_result:
-            await cdnFile_collection.update_one(
-                {"_id": file.sha1}, {"$set": {"disable": False}}
-            )
-            return BaseResponse(
-                status_code=500,
-                content={
-                    "code": 500,
-                    "message": "Hash and size match successfully, file is correct",
-                },
-                headers={"Cache-Control": "no-cache"},
-            )
-        else:
-            await cdnFile_collection.update_one(
-                {"_id": file.sha1}, {"$set": {"disable": True}}
-            )
-            return BaseResponse(
-                status_code=200,
-                content={
-                    "code": 200,
-                    "message": "Hash or size not match, file is disabled",
-                },
-                headers={"Cache-Control": "no-cache"},
-            )
-    else:
-        return BaseResponse(
-            status_code=404,
-            content={"code": 404, "message": "File not found"},
-            headers={"Cache-Control": "no-cache"},
-        )
+# @file_cdn_router.get("/file_cdn/report", include_in_schema=False)
+# async def report(
+#     request: Request,
+#     secret: str,
+#     _hash: str = Query(alias="hash"),
+# ):
+#     if not config_manager.mcim_config.file_cdn or not config_manager.mcim_config.file_cdn_redirect_mode == FileCDNRedirectMode.OPEN93HOME or not file_cdn_check_secret(secret):
+#         return Response(
+#             status_code=403, content="Forbidden", headers={"Cache-Control": "no-cache"}
+#         )
+
+#     file: Optional[cdnFile] = await request.app.state.aio_mongo_engine.find_one(
+#         cdnFile, cdnFile.sha1 == _hash
+#     )
+
+#     if file:
+#         check_result = await check_file_hash_and_size(
+#             url=file.url, hash=_hash, size=file.size
+#         )
+#         cdnFile_collection = request.app.state.aio_mongo_engine.get_collection(cdnFile)
+#         if check_result:
+#             await cdnFile_collection.update_one(
+#                 {"_id": file.sha1}, {"$set": {"disable": False}}
+#             )
+#             return BaseResponse(
+#                 status_code=500,
+#                 content={
+#                     "code": 500,
+#                     "message": "Hash and size match successfully, file is correct",
+#                 },
+#                 headers={"Cache-Control": "no-cache"},
+#             )
+#         else:
+#             await cdnFile_collection.update_one(
+#                 {"_id": file.sha1}, {"$set": {"disable": True}}
+#             )
+#             return BaseResponse(
+#                 status_code=200,
+#                 content={
+#                     "code": 200,
+#                     "message": "Hash or size not match, file is disabled",
+#                 },
+#                 headers={"Cache-Control": "no-cache"},
+#             )
+#     else:
+#         return BaseResponse(
+#             status_code=404,
+#             content={"code": 404, "message": "File not found"},
+#             headers={"Cache-Control": "no-cache"},
+#         )

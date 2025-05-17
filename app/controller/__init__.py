@@ -5,6 +5,7 @@ from app.controller.curseforge import curseforge_router
 from app.controller.file_cdn import file_cdn_router
 from app.controller.translate import translate_router
 from app.config import config_manager
+from app.config.mcim import FileCDNRedirectMode
 from app.utils.loger import log
 from app.models.database.modrinth import (
     Project as ModrinthProject,
@@ -101,7 +102,11 @@ async def mcim_statistics(
             "file": modrinth_file_count[0]["count"],
         }
 
-    if file_cdn and mcim_config.file_cdn:
+    if (
+        file_cdn
+        and mcim_config.file_cdn
+        and mcim_config.file_cdn_redirect_mode == FileCDNRedirectMode.OPEN93HOME
+    ):
         file_cdn_file_collection = request.app.state.aio_mongo_engine.get_collection(
             FileCDNFile
         )
@@ -113,7 +118,7 @@ async def mcim_statistics(
         result["file_cdn"] = {
             "file": file_cdn_file_count[0]["count"],
         }
-    
+
     return BaseResponse(
         content=result,
         headers={"Cache-Control": f"max-age=3600"},
