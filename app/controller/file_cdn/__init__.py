@@ -122,10 +122,10 @@ async def get_modrinth_file(
             status_code=301,
         )
 
-    async def get_pysio_response(
+    def get_pysio_response(
         project_id: str, version_id: str, file_name: str
     ) -> RedirectResponse:
-        url = f"https://{mcim_config.pysio_endpoint}/data/{project_id}/versions/{version_id}/{file_name}"
+        url = f"{mcim_config.pysio_endpoint}/data/{project_id}/versions/{version_id}/{file_name}"
         return RedirectResponse(
             url=url,
             headers={"Cache-Control": f"public, age={3600 * 24 * 1}"},
@@ -136,7 +136,7 @@ async def get_modrinth_file(
         return get_origin_response(project_id, version_id, file_name)
     elif FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.PYSIO:
         # Note: Pysio 表示无需筛选，所以直接跳过 file 检索
-        pysio_response = await get_pysio_response(project_id=project_id, version_id=version_id, file_name=file_name)
+        pysio_response = get_pysio_response(project_id=project_id, version_id=version_id, file_name=file_name)
         return pysio_response
 
     file: Optional[mrFile] = await request.app.state.aio_mongo_engine.find_one(
@@ -218,7 +218,7 @@ async def get_curseforge_file(
         return origin_response
     elif FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.PYSIO:
         # Note: Pysio 表示无需筛选，所以直接跳过 file 检索
-        pysio_response = await get_pysio_response(
+        pysio_response = get_pysio_response(
             fileId1=fileid1, fileId2=fileid2, file_name=file_name
         )
         return pysio_response
