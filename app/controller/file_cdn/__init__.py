@@ -136,7 +136,7 @@ async def get_modrinth_file(
         return get_origin_response()
     elif FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.PYSIO:
         # Note: Pysio 表示无需筛选，所以直接跳过 file 检索
-        pysio_response = await get_pysio_response()
+        pysio_response = await get_pysio_response(project_id=project_id, version_id=version_id, file_name=file_name)
         return pysio_response
 
     file: Optional[mrFile] = await request.app.state.aio_mongo_engine.find_one(
@@ -202,7 +202,7 @@ async def get_curseforge_file(
         )
 
     def get_pysio_response(
-        fileId1: int, fileId2: int, file_name: str, request: Request
+        fileId1: int, fileId2: int, file_name: str
     ) -> RedirectResponse:
         # TODO:暂时不做进一步筛选
         return RedirectResponse(
@@ -216,7 +216,9 @@ async def get_curseforge_file(
         return origin_response
     elif FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.PYSIO:
         # Note: Pysio 表示无需筛选，所以直接跳过 file 检索
-        pysio_response = await get_pysio_response()
+        pysio_response = await get_pysio_response(
+            fileId1=fileid1, fileId2=fileid2, file_name=file_name
+        )
         return pysio_response
 
     fileid = int(f"{fileid1}{fileid2}")
