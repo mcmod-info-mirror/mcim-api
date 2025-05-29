@@ -5,6 +5,7 @@ from typing import Optional
 import time
 import hashlib
 from email.utils import formatdate
+from urllib.parse import quote
 
 from app.models.database.curseforge import File as cfFile
 from app.models.database.modrinth import File as mrFile
@@ -206,7 +207,7 @@ async def get_curseforge_file(
     ) -> RedirectResponse:
         # TODO:暂时不做进一步筛选
         return RedirectResponse(
-            url=f"{mcim_config.pysio_endpoint}/files/{fileId1}/{fileId2}/{file_name}",
+            url=f"{mcim_config.pysio_endpoint}/files/{fileId1}/{fileId2}/{quote(file_name)}",
             headers={"Cache-Control": f"public, age={3600 * 24 * 7}"},
             status_code=301,
         )
