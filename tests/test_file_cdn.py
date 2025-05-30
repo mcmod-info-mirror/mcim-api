@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+import pytest
 
 from app.config import MCIMConfig
 
@@ -17,6 +18,7 @@ uncached_modrinth_sample = [
 cached_curseforge_sample = [
     "/files/6000/080/sodium-fabric-0.6.5%2Bmc1.21.1.jar", # 68469cfbcb1b7fcdb0d11c8b984a657adfac5684
     "/files/5217/345/Vanilla-Expanded-1.20.1-forge.jar", # aa1a508fa088116e4cf8a96c0b56dbadbe99e079
+    "/files/5503/516/comforts-forge-6.4.0%2B1.20.1.jar" # test + -> %2B
 ]
 
 uncached_curseforge_sample = [
@@ -26,7 +28,6 @@ uncached_curseforge_sample = [
 
 
 def test_modrinth_file_cdn(client: TestClient):
-    # 也许应该进一步验证返回的 URL 是源站还是 Open93Home
     for url in cached_modrinth_sample:
         response = client.get(url, follow_redirects=False)
         assert 300 <= response.status_code <= 400
@@ -49,7 +50,7 @@ def test_curseforge_file_cdn(client: TestClient):
         assert 300 <= response.status_code <= 400
         assert response.headers.get("Location") is not None
 
-
+@pytest.mark.skip("OPENMCIM OFFLINE, SKIP THIS TEST")
 def test_file_cdn_list(client: TestClient):
     response = client.get(
         "/file_cdn/list", params={"secret": mcim_config.file_cdn_secret}
