@@ -1,9 +1,11 @@
-import os
-import shutil
-from fastapi import FastAPI
-from fastapi.responses import RedirectResponse, ORJSONResponse, Response
+from fastapi import FastAPI, Request
+from fastapi.responses import RedirectResponse
 from starlette.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.exception_handlers import (
+    request_validation_exception_handler,
+)
+from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
 from app.controller import controller_router
 from app.utils.loger import log
@@ -18,7 +20,11 @@ from app.database._redis import (
 from app.utils.response_cache import Cache
 from app.utils.response_cache import cache
 from app.utils.response import BaseResponse
-from app.utils.middleware import TimingMiddleware, EtagMiddleware, CountTrustableMiddleware, UncachePOSTMiddleware
+from app.utils.middleware import (
+    TimingMiddleware,
+    CountTrustableMiddleware,
+    UncachePOSTMiddleware,
+)
 from app.utils.metric import init_prometheus_metrics
 
 mcim_config = MCIMConfig.load()
@@ -60,9 +66,6 @@ APP.add_middleware(GZipMiddleware, minimum_size=1000)
 # 计时中间件
 APP.add_middleware(TimingMiddleware)
 
-# # Etag 中间件
-# APP.add_middleware(EtagMiddleware)
-
 # 统计 Trustable 请求
 APP.add_middleware(CountTrustableMiddleware)
 
@@ -77,6 +80,15 @@ APP.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@APP.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc):
+    # Log the 422 error details
+    log.debug(
+        f"Invalid request on {request.url}: {exc}. Request body: {await request.body()}"
+    )
+    return await request_validation_exception_handler(request, exc)
 
 
 @APP.get("/favicon.ico")
