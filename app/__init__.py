@@ -83,10 +83,10 @@ APP.add_middleware(
 
 
 @APP.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc):
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
     # Log the 422 error details
     log.debug(
-        f"Invalid request on {request.url}: {exc}. Request body: {await request.body()}"
+        f"Invalid request on {request.url}: {exc}. Request body: {exc.body}"
     )
     return await request_validation_exception_handler(request, exc)
 
