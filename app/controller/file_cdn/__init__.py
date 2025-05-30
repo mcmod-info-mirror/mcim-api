@@ -97,7 +97,6 @@ async def get_modrinth_file(
         return RedirectResponse(
             url=url,
             headers={"Cache-Control": f"public, age={3600 * 24 * 1}"},
-            status_code=302,
         )
 
     def get_open93home_response(sha1: str) -> Optional[RedirectResponse]:
@@ -111,7 +110,7 @@ async def get_modrinth_file(
         #     return RedirectResponse(
         #         url=f"{mcim_config.open93home_endpoint}/{file_cdn_model.path}",
         #         headers={"Cache-Control": f"public, age={3600*24*7}"},
-        #         status_code=301,
+        #
         #     )
 
         # 信任 file_cdn_cached 则不再检查
@@ -120,7 +119,6 @@ async def get_modrinth_file(
             # url=f"{mcim_config.open93home_endpoint}/{file_cdn_model.path}",
             url=f"{mcim_config.open93home_endpoint}/{sha1}",  # file_cdn_model.path 实际上是 sha1
             headers={"Cache-Control": f"public, age={3600 * 24 * 7}"},
-            status_code=301,
         )
 
     def get_pysio_response(
@@ -130,14 +128,15 @@ async def get_modrinth_file(
         return RedirectResponse(
             url=url,
             headers={"Cache-Control": f"public, age={3600 * 24 * 1}"},
-            status_code=302,
         )
 
     if not mcim_config.file_cdn:
         return get_origin_response(project_id, version_id, file_name)
     elif FILE_CDN_REDIRECT_MODE == FileCDNRedirectMode.PYSIO:
         # Note: Pysio 表示无需筛选，所以直接跳过 file 检索
-        pysio_response = get_pysio_response(project_id=project_id, version_id=version_id, file_name=file_name)
+        pysio_response = get_pysio_response(
+            project_id=project_id, version_id=version_id, file_name=file_name
+        )
         return pysio_response
 
     file: Optional[mrFile] = await request.app.state.aio_mongo_engine.find_one(
@@ -189,7 +188,6 @@ async def get_curseforge_file(
         return RedirectResponse(
             url=url,
             headers={"Cache-Control": f"public, age={3600 * 24 * 7}"},
-            status_code=302,
         )
 
     def get_open93home_response(sha1: str) -> RedirectResponse:
@@ -199,7 +197,6 @@ async def get_curseforge_file(
             # url=f"{mcim_config.open93home_endpoint}/{file_cdn_model.path}",
             url=f"{mcim_config.open93home_endpoint}/{sha1}",  # file_cdn_model.path 实际上是 sha1
             headers={"Cache-Control": f"public, age={3600 * 24 * 7}"},
-            status_code=301,
         )
 
     def get_pysio_response(
@@ -209,7 +206,6 @@ async def get_curseforge_file(
         return RedirectResponse(
             url=f"{mcim_config.pysio_endpoint}/files/{fileId1}/{fileId2}/{quote(file_name)}",
             headers={"Cache-Control": f"public, age={3600 * 24 * 7}"},
-            status_code=301,
         )
 
     if not mcim_config.file_cdn:
@@ -271,7 +267,10 @@ async def list_file_cdn(
         le=10000,
     ),
 ):
-    if not file_cdn_check_secret(secret) or not mcim_config.file_cdn_redirect_mode == FileCDNRedirectMode.OPEN93HOME:
+    if (
+        not file_cdn_check_secret(secret)
+        or not mcim_config.file_cdn_redirect_mode == FileCDNRedirectMode.OPEN93HOME
+    ):
         return JSONResponse(
             status_code=403, content="Forbidden", headers={"Cache-Control": "no-cache"}
         )
@@ -316,7 +315,10 @@ async def report(
     secret: str,
     _hash: str = Query(alias="hash"),
 ):
-    if not file_cdn_check_secret(secret) or not mcim_config.file_cdn_redirect_mode == FileCDNRedirectMode.OPEN93HOME:
+    if (
+        not file_cdn_check_secret(secret)
+        or not mcim_config.file_cdn_redirect_mode == FileCDNRedirectMode.OPEN93HOME
+    ):
         return JSONResponse(
             status_code=403, content="Forbidden", headers={"Cache-Control": "no-cache"}
         )

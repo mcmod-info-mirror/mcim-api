@@ -94,7 +94,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 @APP.get("/favicon.ico")
 @cache(never_expire=True)
 async def favicon():
-    return RedirectResponse(url=mcim_config.favicon_url, status_code=301)
+    return RedirectResponse(url=mcim_config.favicon_url)
 
 
 WELCOME_MESSAGE = {
