@@ -137,7 +137,7 @@ async def curseforge_search(
         "gameVersions": gameVersions,
         "searchFilter": searchFilter,
         "sortField": sortField.value if sortField is not None else None,
-        "sortOrder": sortOrder,
+        "sortOrder": sortOrder.value if sortOrder is not None else None,
         "modLoaderType": modLoaderType.value if modLoaderType is not None else None,
         "modLoaderTypes": modLoaderTypes,
         "gameVersionTypeId": gameVersionTypeId,
