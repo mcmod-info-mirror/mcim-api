@@ -4,9 +4,6 @@
 
 为各平台的 Mod 的 API 缓存加速，由 [MCLF-CN #3](https://github.com/MCLF-CN/docs/issues/3) 提议，由[鸣谢列表](#鸣谢)内的各位提供支持~
 
-> [!WARNING]
-> 由于高考，未来半年内也许无人维护。但镜像会继续运行。
-
 已缓存 **绝大多数** 的 Modrinth 和 Curseforge 上的 Minecraft Mod 信息。缓存统计信息见 [mcim-statistics](https://mod.mcimirror.top/statistics)。
 
 > [!WARNING]
