@@ -42,6 +42,9 @@ SEARCH_TIMEOUT = 3
 
 
 class ModsSearchSortField(int, Enum):
+    """
+    https://docs.curseforge.com/rest-api/#tocS_ModsSearchSortField
+    """
     Featured = 1
     Popularity = 2
     LastUpdated = 3
@@ -57,6 +60,9 @@ class ModsSearchSortField(int, Enum):
 
 
 class ModLoaderType(int, Enum):
+    """
+    https://docs.curseforge.com/rest-api/#tocS_ModLoaderType
+    """
     Any = 0
     Forge = 1
     Cauldron = 2
@@ -65,6 +71,12 @@ class ModLoaderType(int, Enum):
     Quilt = 5
     NeoForge = 6
 
+class ModsSearchSortOrder(str, Enum):
+    """
+    'asc' if sort is in ascending order, 'desc' if sort is in descending order
+    """
+    ASC = "asc"
+    DESC = "desc"
 
 async def check_search_result(request: Request, res: dict):
     modids = set()
@@ -85,7 +97,7 @@ async def check_search_result(request: Request, res: dict):
             await add_curseforge_modIds_to_queue(modIds=list(not_found_modids))
             log.debug(f"modIds: {not_found_modids} not found, add to queue.")
         else:
-            log.debug(f"All Mods have been found.")
+            log.debug("All Mods have been found.")
     else:
         log.debug("Search esult is empty")
 
@@ -106,7 +118,7 @@ async def curseforge_search(
     gameVersions: Optional[str] = None,
     searchFilter: Optional[str] = None,
     sortField: Optional[ModsSearchSortField] = None,
-    sortOrder: Optional[str] = None,
+    sortOrder: Optional[ModsSearchSortOrder] = None,
     modLoaderType: Optional[ModLoaderType] = None,
     modLoaderTypes: Optional[str] = None,
     gameVersionTypeId: Optional[int] = None,
@@ -124,9 +136,9 @@ async def curseforge_search(
         "gameVersion": gameVersion,
         "gameVersions": gameVersions,
         "searchFilter": searchFilter,
-        "sortField": sortField.value if not sortField is None else None,
+        "sortField": sortField.value if sortField is not None else None,
         "sortOrder": sortOrder,
-        "modLoaderType": modLoaderType.value if not modLoaderType is None else None,
+        "modLoaderType": modLoaderType.value if modLoaderType is not None else None,
         "modLoaderTypes": modLoaderTypes,
         "gameVersionTypeId": gameVersionTypeId,
         "authorId": authorId,
