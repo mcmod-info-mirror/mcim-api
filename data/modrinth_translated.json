@@ -1,1 +1,18 @@
-[{"_id":"AANobbMI","original":"The fastest and most compatible rendering optimization mod for Minecraft. Now available for both NeoForge and Fabric!","translated":"Minecraft 最快速且兼容性最好的渲染优化模组。现在已支持 NeoForge 和 Fabric 两大框架！","translated_at":{"$date":"2025-02-02T10:40:56.155Z"}}]
+[
+    {
+        "_id": "AANobbMI",
+        "original": "The fastest and most compatible rendering optimization mod for Minecraft. Now available for both NeoForge and Fabric!",
+        "translated": "Minecraft 最快速且兼容性最好的渲染优化模组。现在已支持 NeoForge 和 Fabric 两大框架！",
+        "translated_at": {
+            "$date": "2025-02-02T10:40:56.155Z"
+        }
+    },
+    {
+        "project_id": "P7dR8mSH",
+        "translated": "轻量级且模块化的API，提供mods使用fabric工具链时常用的功能钩子和兼容性措施。",
+        "original": "Lightweight and modular API providing common hooks and intercompatibility measures utilized by mods using the Fabric toolchain.",
+        "translated_at": {
+            "$date": "2025-02-02T10:40:56.159Z"
+        }
+    }
+]
