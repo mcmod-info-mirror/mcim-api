@@ -8,13 +8,13 @@ modIds = [238222, 1004027]
 def test_curseforge_translate(client: TestClient):
     response = client.get(f"/translate/curseforge?modId={modIds[0]}")
     assert response.status_code == 200
-    assert response.json()["modId"] == modIds
+    assert response.json()["modId"] == modIds[0]
 
 
 def test_modrinth_translate(client: TestClient):
     response = client.get(f"/translate/modrinth?project_id={project_ids[0]}")
     assert response.status_code == 200
-    assert response.json()["project_id"] == project_ids
+    assert response.json()["project_id"] == project_ids[0]
 
 
 def test_modrinth_translate_batch(client: TestClient):
