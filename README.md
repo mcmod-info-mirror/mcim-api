@@ -4,9 +4,6 @@
 
 为各平台的 Mod 的 API 缓存加速，由 [MCLF-CN #3](https://github.com/MCLF-CN/docs/issues/3) 提议，由[鸣谢列表](#鸣谢)内的各位提供支持~
 
-> [!WARNING]
-> 由于高考，未来半年内也许无人维护。但镜像会继续运行。
-
 已缓存 **绝大多数** 的 Modrinth 和 Curseforge 上的 Minecraft Mod 信息。缓存统计信息见 [mcim-statistics](https://mod.mcimirror.top/statistics)。
 
 > [!WARNING]
@@ -110,7 +107,7 @@ URL 参数：`modId`
 
 关于 Mod 开发者收益问题，由于 API 下载量并不计入收益，因此无论从启动器官方源下载还是镜像源下载都是无法为 Mod 开发者提供收益的，不接受影响 Mod 开发者收益的指责。
 
-**本镜像可能会在滥用或遭到攻击的情况下切换到 Cloudflare CDN 或开启 URL 鉴权，或者暂时关闭。**
+**本镜像可能会在滥用或遭到攻击的情况下暂时关闭。**
 
 **这是一项公益服务，请不要攻击我们**
 
