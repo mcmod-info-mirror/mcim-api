@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, BackgroundTasks
+from fastapi import APIRouter, Request, BackgroundTasks, Response, Query
 from typing import List, Optional, Union, Annotated
 from pydantic import BaseModel, Field
 from odmantic import query
@@ -26,6 +26,7 @@ from app.models.response.curseforge import (
 from app.config.mcim import MCIMConfig
 from app.utils.response import TrustableResponse, UncachedResponse, BaseResponse
 from app.utils.network import request as request_async
+from app.exceptions import ResponseCodeException
 from app.utils.loger import log
 from app.utils.response_cache import cache
 
@@ -45,6 +46,7 @@ class ModsSearchSortField(int, Enum):
     """
     https://docs.curseforge.com/rest-api/#tocS_ModsSearchSortField
     """
+
     Featured = 1
     Popularity = 2
     LastUpdated = 3
@@ -63,6 +65,7 @@ class ModLoaderType(int, Enum):
     """
     https://docs.curseforge.com/rest-api/#tocS_ModLoaderType
     """
+
     Any = 0
     Forge = 1
     Cauldron = 2
@@ -71,12 +74,15 @@ class ModLoaderType(int, Enum):
     Quilt = 5
     NeoForge = 6
 
+
 class ModsSearchSortOrder(str, Enum):
     """
     'asc' if sort is in ascending order, 'desc' if sort is in descending order
     """
+
     ASC = "asc"
     DESC = "desc"
+
 
 async def check_search_result(request: Request, res: dict):
     modids = set()
@@ -125,9 +131,21 @@ async def curseforge_search(
     authorId: Optional[int] = None,
     primaryAuthorId: Optional[int] = None,
     slug: Optional[str] = None,
-    index: Optional[int] = None,
-    pageSize: Optional[int] = 50,
+    index: Optional[int] = Query(
+        le=10000,
+        default=0,
+        description="A zero based index of the first item to include in the response, the limit is: (index + pageSize <= 10,000).",
+    ),
+    pageSize: Optional[int] = Query(
+        default=50,
+        le=50,
+        description="The number of items to include in the response, the default/maximum value is 50.",
+    ),
 ):
+    if index is not None and pageSize is not None and index + pageSize > 10000:
+        return Response(
+            status_code=400, content="The limit is: (index + pageSize <= 10,000)"
+        )
     params = {
         "gameId": gameId,
         "classId": classId,
@@ -147,16 +165,26 @@ async def curseforge_search(
         "index": index,
         "pageSize": pageSize,
     }
-    res = (
-        await request_async(
-            f"{API}/v1/mods/search",
-            params=params,
-            headers=HEADERS,
-            timeout=SEARCH_TIMEOUT,
-        )
-    ).json()
-    await check_search_result(request=request, res=res)
-    return TrustableResponse(content=SearchResponse(**res))
+    try:
+        res = (
+            await request_async(
+                f"{API}/v1/mods/search",
+                params=params,
+                headers=HEADERS,
+                timeout=SEARCH_TIMEOUT,
+            )
+        ).json()
+        await check_search_result(request=request, res=res)
+        return TrustableResponse(content=SearchResponse(**res))
+    except ResponseCodeException as e:
+        if e.status_code == 400:
+            return Response(
+                status_code=400,
+                content="The limit is: (index + pageSize <= 10,000)"
+                if index + pageSize > 10000
+                else "Bad Request",
+            )
+        raise e
 
 
 @v1_router.get(
