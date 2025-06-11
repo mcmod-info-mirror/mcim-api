@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Request
 from typing import Optional
-from app.controller.modrinth import modrinth_router
-from app.controller.curseforge import curseforge_router
-from app.controller.file_cdn import file_cdn_router
-from app.controller.translate import translate_router
+from app.routes.modrinth import modrinth_router
+from app.routes.curseforge import curseforge_router
+from app.routes.file_cdn import file_cdn_router
+from app.routes.translate import translate_router
 from app.config import MCIMConfig
 from app.utils.loger import log
 from app.models.database.modrinth import (
@@ -22,14 +22,14 @@ from app.utils.response_cache import cache
 
 mcim_config = MCIMConfig.load()
 
-controller_router = APIRouter()
-controller_router.include_router(curseforge_router)
-controller_router.include_router(modrinth_router)
-controller_router.include_router(file_cdn_router)
-controller_router.include_router(translate_router)
+root_router = APIRouter()
+root_router.include_router(curseforge_router)
+root_router.include_router(modrinth_router)
+root_router.include_router(file_cdn_router)
+root_router.include_router(translate_router)
 
 
-@controller_router.get(
+@root_router.get(
     "/statistics", description="MCIM 缓存统计信息，每小时更新", include_in_schema=True
 )
 @cache(expire=3600)

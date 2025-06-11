@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
-from app.controller.modrinth.v2 import v2_router
+from app.routes.modrinth.v2 import v2_router
 from app.utils.response_cache import cache
 from app.utils.response import BaseResponse
 from app.models.database.modrinth import Project, Version, File

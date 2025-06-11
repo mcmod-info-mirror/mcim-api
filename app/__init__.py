@@ -7,7 +7,7 @@ from fastapi.exception_handlers import (
 )
 from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
-from app.controller import controller_router
+from app.routes import root_router
 from app.utils.loger import log
 from app.config import MCIMConfig
 from app.database.mongodb import setup_async_mongodb, init_mongodb_aioengine
@@ -58,7 +58,7 @@ if mcim_config.prometheus:
     init_prometheus_metrics(APP)
 
 
-APP.include_router(controller_router)
+APP.include_router(root_router)
 
 # Gzip 中间件
 APP.add_middleware(GZipMiddleware, minimum_size=1000)

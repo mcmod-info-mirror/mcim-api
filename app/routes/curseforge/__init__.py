@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
-from app.controller.curseforge.v1 import v1_router
+from app.routes.curseforge.v1 import v1_router
 from app.utils.response_cache import cache
 from app.utils.response import BaseResponse
 from app.models.database.curseforge import Mod, File, Fingerprint
