@@ -310,6 +310,8 @@ async def curseforge_mod_files(
                 "documents": [
                     {"$skip": index if index else 0},
                     {"$limit": pageSize},
+                    # sort by fileDate
+                    {"$sort": {"fileDate": -1}},
                 ],
             }
         },
