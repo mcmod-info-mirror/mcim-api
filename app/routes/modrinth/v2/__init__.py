@@ -161,6 +161,7 @@ async def modrinth_project_versions(
         version_model_list: Optional[List[Version]] = await aio_mongo_engine.find(
             Version,
             query.in_(Version.id, version_list),
+            sort=query.desc(Version.date_published)
         )
 
         return TrustableResponse(
