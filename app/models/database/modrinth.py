@@ -2,7 +2,7 @@ from odmantic import Model, Field, EmbeddedModel
 from pydantic import BaseModel, field_serializer, field_validator, model_validator
 
 from typing import List, Optional, Union
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class DonationUrl(BaseModel):
@@ -62,7 +62,7 @@ class Project(Model):
     loaders: Optional[List[str]] = None
     gallery: Optional[List[GalleryItem]] = None
 
-    sync_at: datetime = Field(default_factory=datetime.utcnow)
+    sync_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     model_config = {"collection": "modrinth_projects", "title": "Modrinth Project"}
 
@@ -93,7 +93,7 @@ class File(Model):
 
     file_cdn_cached: Optional[bool] = False
 
-    sync_at: datetime = Field(default_factory=datetime.utcnow)
+    sync_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     model_config = {"collection": "modrinth_files", "title": "Modrinth File"}
 
@@ -126,7 +126,7 @@ class Version(Model):
     changelog_url: Optional[str] = None  # Deprecated
     files: List[FileInfo]
 
-    sync_at: datetime = Field(default_factory=datetime.utcnow)
+    sync_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     model_config = {"collection": "modrinth_versions", "title": "Modrinth Version"}
 
@@ -137,7 +137,7 @@ class Category(Model):
     project_type: str
     header: str
 
-    sync_at: datetime = Field(default_factory=datetime.utcnow)
+    sync_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     model_config = {"collection": "modrinth_categories", "title": "Modrinth Category"}
 
@@ -147,7 +147,7 @@ class Loader(Model):
     name: str
     supported_project_types: List[str]
 
-    sync_at: datetime = Field(default_factory=datetime.utcnow)
+    sync_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     model_config = {"collection": "modrinth_loaders", "title": "Modrinth Loader"}
 
@@ -158,7 +158,7 @@ class GameVersion(Model):
     date: datetime
     major: bool
 
-    sync_at: datetime = Field(default_factory=datetime.utcnow)
+    sync_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     model_config = {
         "collection": "modrinth_game_versions",

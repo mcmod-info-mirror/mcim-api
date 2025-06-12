@@ -1,7 +1,7 @@
 from odmantic import Model, Field, EmbeddedModel
 from pydantic import BaseModel, field_serializer, model_validator
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class FileDependencies(BaseModel):
@@ -101,7 +101,7 @@ class File(Model):
     modules: Optional[List[Module]] = None
 
     file_cdn_cached: bool = False
-    sync_at: datetime = Field(default_factory=datetime.utcnow)
+    sync_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     model_config = {
         "collection": "curseforge_files",
