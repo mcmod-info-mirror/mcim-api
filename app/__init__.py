@@ -32,11 +32,11 @@ mcim_config = MCIMConfig.load()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.aio_redis_engine = init_redis_aioengine()
+    aio_redis_engine = init_redis_aioengine()
     init_sync_queue_redis_engine()
-    await app.state.aio_redis_engine.flushall()
-    app.state.aio_mongo_engine = init_mongodb_aioengine()
-    await setup_async_mongodb(app.state.aio_mongo_engine)
+    await aio_redis_engine.flushall()
+    aio_mongo_engine = init_mongodb_aioengine()
+    await setup_async_mongodb(aio_mongo_engine)
 
     if mcim_config.redis_cache:
         app.state.fastapi_cache = Cache.init(enabled=True)

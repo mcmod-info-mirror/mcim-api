@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Request, BackgroundTasks, Response, Query
-from typing import List, Optional, Union, Annotated
+from fastapi import APIRouter, Depends, Response, Query
+from typing import List, Optional, Annotated
 from pydantic import BaseModel, Field
-from odmantic import query
+from odmantic import query, AIOEngine
 from enum import Enum
 
 from app.sync_queue.curseforge import (
@@ -24,11 +24,12 @@ from app.models.response.curseforge import (
     CaregoriesResponse,
 )
 from app.config.mcim import MCIMConfig
-from app.utils.response import TrustableResponse, UncachedResponse, BaseResponse
+from app.utils.response import TrustableResponse, UncachedResponse
 from app.utils.network import request as request_async
 from app.exceptions import ResponseCodeException
 from app.utils.loger import log
 from app.utils.response_cache import cache
+from app.database.mongodb import get_aio_mongodb_engine
 
 mcim_config = MCIMConfig.load()
 
@@ -84,7 +85,7 @@ class ModsSearchSortOrder(str, Enum):
     DESC = "desc"
 
 
-async def check_search_result(request: Request, res: dict):
+async def check_search_result(res: dict, aio_mongo_engine: AIOEngine):
     modids = set()
     for mod in res["data"]:
         # 排除小于 30000 的 modid
@@ -93,7 +94,7 @@ async def check_search_result(request: Request, res: dict):
 
     # check if modids in db
     if modids:
-        mod_models: List[Mod] = await request.app.state.aio_mongo_engine.find(
+        mod_models: List[Mod] = await aio_mongo_engine.find(
             Mod, query.in_(Mod.id, list(modids))
         )
 
@@ -115,7 +116,6 @@ async def check_search_result(request: Request, res: dict):
 )
 @cache(expire=mcim_config.expire_second.curseforge.search)
 async def curseforge_search(
-    request: Request,
     gameId: int = 432,
     classId: Optional[int] = None,
     categoryId: Optional[int] = None,
@@ -141,6 +141,7 @@ async def curseforge_search(
         le=50,
         description="The number of items to include in the response, the default/maximum value is 50.",
     ),
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine),
 ):
     if index is not None and pageSize is not None and index + pageSize > 10000:
         return Response(
@@ -174,7 +175,7 @@ async def curseforge_search(
                 timeout=SEARCH_TIMEOUT,
             )
         ).json()
-        await check_search_result(request=request, res=res)
+        await check_search_result(res=res, aio_mongo_engine=aio_mongo_engine)
         return TrustableResponse(content=SearchResponse(**res))
     except ResponseCodeException as e:
         if e.status_code == 400:
@@ -194,10 +195,10 @@ async def curseforge_search(
 )
 @cache(expire=mcim_config.expire_second.curseforge.mod)
 async def curseforge_mod(
-    modId: Annotated[int, Field(ge=30000, lt=9999999)], request: Request
+    modId: Annotated[int, Field(ge=30000, lt=9999999)], aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine)
 ):
     trustable: bool = True
-    mod_model: Optional[Mod] = await request.app.state.aio_mongo_engine.find_one(
+    mod_model: Optional[Mod] = await aio_mongo_engine.find_one(
         Mod, Mod.id == modId
     )
     if mod_model is None:
@@ -221,9 +222,9 @@ class modIds_item(BaseModel):
     response_model=ModsResponse,
 )
 # @cache(expire=mcim_config.expire_second.curseforge.mod)
-async def curseforge_mods(item: modIds_item, request: Request):
+async def curseforge_mods(item: modIds_item, aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine)):
     trustable: bool = True
-    mod_models: Optional[List[Mod]] = await request.app.state.aio_mongo_engine.find(
+    mod_models: Optional[List[Mod]] = await aio_mongo_engine.find(
         Mod, query.in_(Mod.id, item.modIds)
     )
     mod_model_count = len(mod_models)
@@ -274,7 +275,6 @@ def convert_modloadertype(type_id: int) -> Optional[str]:
 )
 @cache(expire=mcim_config.expire_second.curseforge.file)
 async def curseforge_mod_files(
-    request: Request,
     modId: Annotated[int, Field(gt=30000, lt=9999999)],
     gameVersion: Optional[str] = None,
     modLoaderType: Optional[int] = None,
@@ -282,6 +282,7 @@ async def curseforge_mod_files(
     pageSize: Optional[
         int
     ] = 50,  # curseforge 官方的 limit 是摆设，启动器依赖此 bug 运行，不能设置 gt...
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine),
 ):
     # 定义聚合管道
     match_conditions = {"modId": modId}
@@ -315,7 +316,7 @@ async def curseforge_mod_files(
     ]
 
     # 执行聚合查询
-    files_collection = request.app.state.aio_mongo_engine.get_collection(File)
+    files_collection = aio_mongo_engine.get_collection(File)
     result = await files_collection.aggregate(pipeline).to_list(length=None)
 
     if not result or not result[0]["documents"]:
@@ -357,9 +358,9 @@ class fileIds_item(BaseModel):
     response_model=FilesResponse,
 )
 # @cache(expire=mcim_config.expire_second.curseforge.file)
-async def curseforge_files(item: fileIds_item, request: Request):
+async def curseforge_files(item: fileIds_item, aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine)):
     trustable = True
-    file_models: Optional[List[File]] = await request.app.state.aio_mongo_engine.find(
+    file_models: Optional[List[File]] = await aio_mongo_engine.find(
         File, query.in_(File.id, item.fileIds)
     )
     if not file_models:
@@ -388,10 +389,10 @@ async def curseforge_files(item: fileIds_item, request: Request):
 async def curseforge_mod_file(
     modId: Annotated[int, Field(ge=30000, lt=9999999)],
     fileId: Annotated[int, Field(ge=530000, lt=99999999)],
-    request: Request,
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine),
 ):
     trustable = True
-    model: Optional[File] = await request.app.state.aio_mongo_engine.find_one(
+    model: Optional[File] = await aio_mongo_engine.find_one(
         File, File.modId == modId, File.id == fileId
     )
     if model is None:
@@ -412,9 +413,9 @@ async def curseforge_mod_file(
 async def curseforge_mod_file_download_url(
     modId: Annotated[int, Field(ge=30000, lt=9999999)],
     fileId: Annotated[int, Field(ge=530000, lt=99999999)],
-    request: Request,
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine),
 ):
-    model: Optional[File] = await request.app.state.aio_mongo_engine.find_one(
+    model: Optional[File] = await aio_mongo_engine.find_one(
         File, File.modId == modId, File.id == fileId
     )
     if (
@@ -438,11 +439,11 @@ class fingerprints_item(BaseModel):
     response_model=FingerprintResponse,
 )
 # @cache(expire=mcim_config.expire_second.curseforge.fingerprint)
-async def curseforge_fingerprints(item: fingerprints_item, request: Request):
+async def curseforge_fingerprints(item: fingerprints_item, aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine)):
     trustable = True
     fingerprints_models: List[
         Fingerprint
-    ] = await request.app.state.aio_mongo_engine.find(
+    ] = await aio_mongo_engine.find(
         Fingerprint, query.in_(Fingerprint.id, item.fingerprints)
     )
     not_match_fingerprints = list(
@@ -491,11 +492,11 @@ async def curseforge_fingerprints(item: fingerprints_item, request: Request):
     response_model=FingerprintResponse,
 )
 # @cache(expire=mcim_config.expire_second.curseforge.fingerprint)
-async def curseforge_fingerprints_432(item: fingerprints_item, request: Request):
+async def curseforge_fingerprints_432(item: fingerprints_item, aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine)):
     trustable = True
     fingerprints_models: List[
         Fingerprint
-    ] = await request.app.state.aio_mongo_engine.find(
+    ] = await aio_mongo_engine.find(
         Fingerprint, query.in_(Fingerprint.id, item.fingerprints)
     )
     not_match_fingerprints = list(
@@ -544,28 +545,28 @@ async def curseforge_fingerprints_432(item: fingerprints_item, request: Request)
 )
 @cache(expire=mcim_config.expire_second.curseforge.categories)
 async def curseforge_categories(
-    request: Request,
     gameId: int,
     classId: Optional[int] = None,
     classOnly: Optional[bool] = None,
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine),
 ):
     if classId:
         categories: Optional[
             List[Category]
-        ] = await request.app.state.aio_mongo_engine.find(
+        ] = await aio_mongo_engine.find(
             Category,
             query.and_(Category.gameId == gameId, Category.classId == classId),
         )
     elif classOnly:
         categories: Optional[
             List[Category]
-        ] = await request.app.state.aio_mongo_engine.find(
+        ] = await aio_mongo_engine.find(
             Category, Category.gameId == gameId, Category.isClass == True
         )
     else:
         categories: Optional[
             List[Category]
-        ] = await request.app.state.aio_mongo_engine.find(
+        ] = await aio_mongo_engine.find(
             Category, Category.gameId == gameId
         )
     if not categories:

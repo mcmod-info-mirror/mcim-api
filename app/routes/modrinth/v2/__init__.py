@@ -1,11 +1,10 @@
-from fastapi import APIRouter, Query, Path, Request, BackgroundTasks
-from typing import List, Optional, Union, Dict, Annotated
+from fastapi import APIRouter, Path, Depends
+from typing import List, Optional, Dict, Annotated
 from enum import Enum
 from pydantic import BaseModel, Field
-from odmantic import query
+from odmantic import query, AIOEngine
 import json
-import time
-from datetime import datetime
+
 
 from app.models.database.modrinth import (
     Project,
@@ -35,6 +34,7 @@ from app.utils.response import (
 from app.utils.network import request as request_async
 from app.utils.loger import log
 from app.utils.response_cache import cache
+from app.database.mongodb import get_aio_mongodb_engine
 
 mcim_config = MCIMConfig.load()
 
@@ -57,14 +57,16 @@ class ModrinthStatistics(BaseModel):
     include_in_schema=False,
 )
 @cache(expire=3600)
-async def modrinth_statistics(request: Request):
+async def modrinth_statistics(
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine),
+):
     """
     没有统计 author
     """
     # count
-    project_count = await request.app.state.aio_mongo_engine.count(Project)
-    version_count = await request.app.state.aio_mongo_engine.count(Version)
-    file_count = await request.app.state.aio_mongo_engine.count(File)
+    project_count = await aio_mongo_engine.count(Project)
+    version_count = await aio_mongo_engine.count(Version)
+    file_count = await aio_mongo_engine.count(File)
     return BaseResponse(
         content=ModrinthStatistics(
             projects=project_count, versions=version_count, files=file_count
@@ -78,9 +80,12 @@ async def modrinth_statistics(request: Request):
     response_model=Project,
 )
 @cache(expire=mcim_config.expire_second.modrinth.project)
-async def modrinth_project(request: Request, idslug: str):
+async def modrinth_project(
+    idslug: str,
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine),
+):
     trustable = True
-    model: Optional[Project] = await request.app.state.aio_mongo_engine.find_one(
+    model: Optional[Project] = await aio_mongo_engine.find_one(
         Project, query.or_(Project.id == idslug, Project.slug == idslug)
     )
     if model is None:
@@ -96,11 +101,14 @@ async def modrinth_project(request: Request, idslug: str):
     response_model=List[Project],
 )
 @cache(expire=mcim_config.expire_second.modrinth.project)
-async def modrinth_projects(ids: str, request: Request):
+async def modrinth_projects(
+    ids: str,
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine),
+):
     ids_list: List[str] = json.loads(ids)
     trustable = True
     # id or slug
-    models: Optional[List[Project]] = await request.app.state.aio_mongo_engine.find(
+    models: Optional[List[Project]] = await aio_mongo_engine.find(
         Project,
         query.and_(
             query.or_(
@@ -133,15 +141,16 @@ async def modrinth_projects(ids: str, request: Request):
     response_model=List[Project],
 )
 @cache(expire=mcim_config.expire_second.modrinth.version)
-async def modrinth_project_versions(idslug: str, request: Request):
+async def modrinth_project_versions(
+    idslug: str,
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine),
+):
     """
     先查 Project 的 Version 列表再拉取...避免遍历整个 Version 表
     """
     trustable = True
-    project_model: Optional[Project] = (
-        await request.app.state.aio_mongo_engine.find_one(
-            Project, query.or_(Project.id == idslug, Project.slug == idslug)
-        )
+    project_model: Optional[Project] = await aio_mongo_engine.find_one(
+        Project, query.or_(Project.id == idslug, Project.slug == idslug)
     )
     if not project_model:
         await add_modrinth_project_ids_to_queue(project_ids=[idslug])
@@ -149,10 +158,9 @@ async def modrinth_project_versions(idslug: str, request: Request):
         return UncachedResponse()
     else:
         version_list = project_model.versions
-        version_model_list: Optional[List[Version]] = (
-            await request.app.state.aio_mongo_engine.find(
-                Version, query.in_(Version.id, version_list)
-            )
+        version_model_list: Optional[List[Version]] = await aio_mongo_engine.find(
+            Version,
+            query.in_(Version.id, version_list),
         )
 
         return TrustableResponse(
@@ -165,12 +173,12 @@ async def modrinth_project_versions(idslug: str, request: Request):
         )
 
 
-async def check_search_result(request: Request, search_result: dict):
+async def check_search_result(search_result: dict, aio_mongo_engine: AIOEngine):
     project_ids = set([project["project_id"] for project in search_result["hits"]])
 
     if project_ids:
         # check project in db
-        project_models: List[Project] = await request.app.state.aio_mongo_engine.find(
+        project_models: List[Project] = await aio_mongo_engine.find(
             Project, query.in_(Project.id, list(project_ids))
         )
 
@@ -204,7 +212,7 @@ class SearchIndex(str, Enum):
 )
 @cache(expire=mcim_config.expire_second.modrinth.search)
 async def modrinth_search_projects(
-    request: Request,
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine),
     query: Optional[str] = None,
     facets: Optional[str] = None,
     offset: Optional[int] = 0,
@@ -224,7 +232,7 @@ async def modrinth_search_projects(
             timeout=SEARCH_TIMEOUT,
         )
     ).json()
-    await check_search_result(request=request, search_result=res)
+    await check_search_result(search_result=res, aio_mongo_engine=aio_mongo_engine)
     return TrustableResponse(content=res)
 
 
@@ -236,10 +244,10 @@ async def modrinth_search_projects(
 @cache(expire=mcim_config.expire_second.modrinth.version)
 async def modrinth_version(
     version_id: Annotated[str, Path(alias="id", pattern=r"[a-zA-Z0-9]{8}")],
-    request: Request,
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine),
 ):
     trustable = True
-    model: Optional[Version] = await request.app.state.aio_mongo_engine.find_one(
+    model: Optional[Version] = await aio_mongo_engine.find_one(
         Version,
         Version.id == version_id,
     )
@@ -256,10 +264,13 @@ async def modrinth_version(
     response_model=List[Version],
 )
 @cache(expire=mcim_config.expire_second.modrinth.version)
-async def modrinth_versions(ids: str, request: Request):
+async def modrinth_versions(
+    ids: str,
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine),
+):
     trustable = True
     ids_list = json.loads(ids)
-    models: List[Version] = await request.app.state.aio_mongo_engine.find(
+    models: List[Version] = await aio_mongo_engine.find(
         Version, query.and_(query.in_(Version.id, ids_list))
     )
     models_count = len(models)
@@ -291,15 +302,15 @@ class Algorithm(str, Enum):
 )
 @cache(expire=mcim_config.expire_second.modrinth.file)
 async def modrinth_file(
-    request: Request,
     hash_: Annotated[
         str, Path(alias="hash", pattern=r"[a-zA-Z0-9]{40}|[a-zA-Z0-9]{128}")
     ],
     algorithm: Optional[Algorithm] = Algorithm.sha1,
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine),
 ):
     trustable = True
     # ignore algo
-    file: Optional[File] = await request.app.state.aio_mongo_engine.find_one(
+    file: Optional[File] = await aio_mongo_engine.find_one(
         File,
         (
             File.hashes.sha512 == hash_
@@ -313,7 +324,7 @@ async def modrinth_file(
         return UncachedResponse()
 
     # get version object
-    version: Optional[Version] = await request.app.state.aio_mongo_engine.find_one(
+    version: Optional[Version] = await aio_mongo_engine.find_one(
         Version, query.and_(Version.id == file.version_id)
     )
     if version is None:
@@ -335,10 +346,13 @@ class HashesQuery(BaseModel):
     response_model=Dict[str, Version],
 )
 # @cache(expire=mcim_config.expire_second.modrinth.file)
-async def modrinth_files(items: HashesQuery, request: Request):
+async def modrinth_files(
+    items: HashesQuery,
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine),
+):
     trustable = True
     # ignore algo
-    files_models: List[File] = await request.app.state.aio_mongo_engine.find(
+    files_models: List[File] = await aio_mongo_engine.find(
         File,
         query.and_(
             (
@@ -381,7 +395,7 @@ async def modrinth_files(items: HashesQuery, request: Request):
             trustable = False
 
     version_ids = [file.version_id for file in files_models]
-    version_models: List[Version] = await request.app.state.aio_mongo_engine.find(
+    version_models: List[Version] = await aio_mongo_engine.find(
         Version, query.in_(Version.id, version_ids)
     )
 
@@ -424,15 +438,15 @@ class UpdateItems(BaseModel):
 @v2_router.post("/version_file/{hash}/update")
 @cache(expire=mcim_config.expire_second.modrinth.file)
 async def modrinth_file_update(
-    request: Request,
     items: UpdateItems,
     hash_: Annotated[
         str, Path(alias="hash", pattern=r"[a-zA-Z0-9]{40}|[a-zA-Z0-9]{128}")
     ],
     algorithm: Optional[Algorithm] = Algorithm.sha1,
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine),
 ):
     trustable = True
-    files_collection = request.app.state.aio_mongo_engine.get_collection(File)
+    files_collection = aio_mongo_engine.get_collection(File)
     pipeline = [
         (
             {"$match": {"_id.sha1": hash_}}
@@ -492,9 +506,12 @@ class MultiUpdateItems(BaseModel):
 
 @v2_router.post("/version_files/update")
 # @cache(expire=mcim_config.expire_second.modrinth.file)
-async def modrinth_mutil_file_update(request: Request, items: MultiUpdateItems):
+async def modrinth_mutil_file_update(
+    items: MultiUpdateItems,
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine),
+):
     trustable = True
-    files_collection = request.app.state.aio_mongo_engine.get_collection(File)
+    files_collection = aio_mongo_engine.get_collection(File)
     pipeline = [
         (
             {"$match": {"_id.sha1": {"$in": items.hashes}}}
@@ -577,8 +594,10 @@ async def modrinth_mutil_file_update(request: Request, items: MultiUpdateItems):
     response_model=List[CategoryInfo],
 )
 @cache(expire=mcim_config.expire_second.modrinth.category)
-async def modrinth_tag_categories(request: Request):
-    categories = await request.app.state.aio_mongo_engine.find(Category)
+async def modrinth_tag_categories(
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine),
+):
+    categories = await aio_mongo_engine.find(Category)
     if categories is None:
         return UncachedResponse()
     return TrustableResponse(content=[category for category in categories])
@@ -590,8 +609,10 @@ async def modrinth_tag_categories(request: Request):
     response_model=List[LoaderInfo],
 )
 @cache(expire=mcim_config.expire_second.modrinth.category)
-async def modrinth_tag_loaders(request: Request):
-    loaders = await request.app.state.aio_mongo_engine.find(Loader)
+async def modrinth_tag_loaders(
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine),
+):
+    loaders = await aio_mongo_engine.find(Loader)
     if loaders is None:
         return UncachedResponse()
     return TrustableResponse(content=[loader for loader in loaders])
@@ -603,8 +624,10 @@ async def modrinth_tag_loaders(request: Request):
     response_model=List[GameVersionInfo],
 )
 @cache(expire=mcim_config.expire_second.modrinth.category)
-async def modrinth_tag_game_versions(request: Request):
-    game_versions = await request.app.state.aio_mongo_engine.find(GameVersion)
+async def modrinth_tag_game_versions(
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine),
+):
+    game_versions = await aio_mongo_engine.find(GameVersion)
     if game_versions is None:
         return UncachedResponse()
     return TrustableResponse(content=[game_version for game_version in game_versions])

@@ -3,7 +3,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import MongoClient
 
 from app.config import MongodbConfig
-from app.models.database.curseforge import Mod, File, Fingerprint  # , ModFilesSyncInfo
+from app.models.database.curseforge import Mod, File, Fingerprint
 from app.models.database.modrinth import Project, Version, File as ModrinthFile
 from app.models.database.file_cdn import File as CDNFile
 from app.utils.loger import log
@@ -14,17 +14,29 @@ aio_mongo_engine: AIOEngine = None
 sync_mongo_engine: SyncEngine = None
 
 
+def _create_mongodb_uri() -> str:
+    """
+    Constructs the MongoDB URI based on the configuration.
+    :return: The MongoDB URI.
+    """
+    if _mongodb_config.auth:
+        return (
+            f"mongodb://{_mongodb_config.user}:{_mongodb_config.password}@"
+            f"{_mongodb_config.host}:{_mongodb_config.port}"
+        )
+    else:
+        return f"mongodb://{_mongodb_config.host}:{_mongodb_config.port}"
+
+
 def init_mongodb_syncengine() -> SyncEngine:
     """
-    Raw Motor client handler, use it when beanie cannot work
-    :return:
+    Initializes the synchronous MongoDB engine.
+    :return: The SyncEngine instance.
     """
     global sync_mongo_engine
     sync_mongo_engine = SyncEngine(
         client=MongoClient(
-            f"mongodb://{_mongodb_config.user}:{_mongodb_config.password}@{_mongodb_config.host}:{_mongodb_config.port}"
-            if _mongodb_config.auth
-            else f"mongodb://{_mongodb_config.host}:{_mongodb_config.port}"
+            _create_mongodb_uri()
         ),
         database="mcim_backend",
     )
@@ -33,14 +45,12 @@ def init_mongodb_syncengine() -> SyncEngine:
 
 def init_mongodb_aioengine() -> AIOEngine:
     """
-    Raw Motor client handler, use it when beanie cannot work
-    :return:
+    Initializes the asynchronous MongoDB engine.
+    :return: The AIOEngine instance.
     """
     return AIOEngine(
         client=AsyncIOMotorClient(
-            f"mongodb://{_mongodb_config.user}:{_mongodb_config.password}@{_mongodb_config.host}:{_mongodb_config.port}"
-            if _mongodb_config.auth
-            else f"mongodb://{_mongodb_config.host}:{_mongodb_config.port}"
+            _create_mongodb_uri()
         ),
         database="mcim_backend",
     )
@@ -48,10 +58,9 @@ def init_mongodb_aioengine() -> AIOEngine:
 
 async def setup_async_mongodb(engine: AIOEngine) -> None:
     """
-    Start beanie when process started.
-    :return:
+    Configures the database with the specified models.
+    :param engine: The AIOEngine instance.
     """
-    # try:
     await engine.configure_database(
         [
             # CurseForge
@@ -68,6 +77,18 @@ async def setup_async_mongodb(engine: AIOEngine) -> None:
     )
 
 
+def get_aio_mongodb_engine() -> AIOEngine:
+    """
+    Retrieves the AIOEngine instance, initializing it if it doesn't exist.
+    :return: The AIOEngine instance.
+    """
+    global aio_mongo_engine
+    if aio_mongo_engine is None:
+        aio_mongo_engine = init_mongodb_aioengine()
+    return aio_mongo_engine
+
+
+# Initialize the engines
 aio_mongo_engine: AIOEngine = init_mongodb_aioengine()
 sync_mongo_engine: SyncEngine = init_mongodb_syncengine()
 

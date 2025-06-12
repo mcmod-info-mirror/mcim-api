@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Request, Query
+from fastapi import APIRouter, Request, Query, Depends  # noqa: F401
 from fastapi.responses import RedirectResponse, JSONResponse
-from odmantic import query
+from odmantic import query, AIOEngine
 from typing import Optional
 import time
 import hashlib
@@ -16,7 +16,7 @@ from app.utils.response_cache import cache
 from app.utils.response import BaseResponse
 from app.utils.network import ResponseCodeException
 from app.utils.network import request as request_async
-
+from app.database.mongodb import get_aio_mongodb_engine
 from app.sync_queue.curseforge import add_curseforge_fileIds_to_queue
 from app.sync_queue.modrinth import add_modrinth_project_ids_to_queue
 from app.utils.metric import (
@@ -65,8 +65,8 @@ def file_cdn_check_secret(secret: str):
 
 
 @file_cdn_router.get("/file_cdn/statistics", include_in_schema=False)
-async def file_cdn_statistics(request: Request):
-    cdnFile_collection = request.app.state.aio_mongo_engine.get_collection(cdnFile)
+async def file_cdn_statistics(aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine)):
+    cdnFile_collection = aio_mongo_engine.get_collection(cdnFile)
     cdnFile_count = await cdnFile_collection.aggregate(
         [{"$collStats": {"count": {}}}]
     ).to_list(length=None)
@@ -87,7 +87,7 @@ async def file_cdn_statistics(request: Request):
     )
 )
 async def get_modrinth_file(
-    project_id: str, version_id: str, file_name: str, request: Request
+    project_id: str, version_id: str, file_name: str, aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine)
 ):
     def get_origin_response(
         project_id: str, version_id: str, file_name: str
@@ -102,7 +102,7 @@ async def get_modrinth_file(
     def get_open93home_response(sha1: str) -> Optional[RedirectResponse]:
         # 重新检查 cdnFile
         # file_cdn_model: Optional[cdnFile] = (
-        #     await request.app.state.aio_mongo_engine.find_one(
+        #     await aio_mongo_engine.find_one(
         #         cdnFile, cdnFile.sha1 == sha1
         #     )
         # )
@@ -139,7 +139,7 @@ async def get_modrinth_file(
         )
         return pysio_response
 
-    file: Optional[mrFile] = await request.app.state.aio_mongo_engine.find_one(
+    file: Optional[mrFile] = await aio_mongo_engine.find_one(
         mrFile,
         query.and_(
             mrFile.project_id == project_id,
@@ -178,7 +178,7 @@ async def get_modrinth_file(
     )
 )
 async def get_curseforge_file(
-    fileid1: int, fileid2: int, file_name: str, request: Request
+    fileid1: int, fileid2: int, file_name: str, aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine)
 ) -> RedirectResponse:
     def get_origin_response(
         fileid1: int, fileid2: int, file_name: str
@@ -222,7 +222,7 @@ async def get_curseforge_file(
 
     fileid = int(f"{fileid1}{fileid2}")
 
-    file: Optional[cfFile] = request.app.state.aio_mongo_engine.find_one(
+    file: Optional[cfFile] = aio_mongo_engine.find_one(
         cfFile,
         query.and_(cfFile.id == fileid, cfFile.fileName == file_name),
     )
@@ -258,7 +258,6 @@ async def get_curseforge_file(
 
 @file_cdn_router.get("/file_cdn/list", include_in_schema=False)
 async def list_file_cdn(
-    request: Request,
     secret: str,
     last_id: Optional[str] = None,
     last_modified: Optional[int] = None,
@@ -266,6 +265,7 @@ async def list_file_cdn(
         default=1000,
         le=10000,
     ),
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine),
 ):
     if (
         not file_cdn_check_secret(secret)
@@ -274,7 +274,7 @@ async def list_file_cdn(
         return JSONResponse(
             status_code=403, content="Forbidden", headers={"Cache-Control": "no-cache"}
         )
-    files_collection = request.app.state.aio_mongo_engine.get_collection(cdnFile)
+    files_collection = aio_mongo_engine.get_collection(cdnFile)
 
     # 动态构建 $match 阶段
     match_stage = {}
@@ -311,9 +311,9 @@ async def check_file_hash_and_size(url: str, hash: str, size: int):
 
 @file_cdn_router.get("/file_cdn/report", include_in_schema=False)
 async def report(
-    request: Request,
     secret: str,
     _hash: str = Query(alias="hash"),
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine),
 ):
     if (
         not file_cdn_check_secret(secret)
@@ -323,7 +323,7 @@ async def report(
             status_code=403, content="Forbidden", headers={"Cache-Control": "no-cache"}
         )
 
-    file: Optional[cdnFile] = await request.app.state.aio_mongo_engine.find_one(
+    file: Optional[cdnFile] = await aio_mongo_engine.find_one(
         cdnFile, cdnFile.sha1 == _hash
     )
 
@@ -331,7 +331,7 @@ async def report(
         check_result = await check_file_hash_and_size(
             url=file.url, hash=_hash, size=file.size
         )
-        cdnFile_collection = request.app.state.aio_mongo_engine.get_collection(cdnFile)
+        cdnFile_collection = aio_mongo_engine.get_collection(cdnFile)
         if check_result:
             await cdnFile_collection.update_one(
                 {"_id": file.sha1}, {"$set": {"disable": False}}

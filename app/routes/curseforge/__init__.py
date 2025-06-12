@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
+from odmantic import AIOEngine
 
 from app.routes.curseforge.v1 import v1_router
 from app.utils.response_cache import cache
 from app.utils.response import BaseResponse
 from app.models.database.curseforge import Mod, File, Fingerprint
+from app.database.mongodb import get_aio_mongodb_engine
 
 curseforge_router = APIRouter(prefix="/curseforge", tags=["curseforge"])
 
@@ -31,15 +33,19 @@ class CurseforgeStatistics(BaseModel):
     include_in_schema=False,
 )
 # @cache(expire=3600)
-async def curseforge_statistics(request: Request):
-    mod_collection = request.app.state.aio_mongo_engine.get_collection(Mod)
-    file_collection = request.app.state.aio_mongo_engine.get_collection(File)
-    fingerprint_collection = request.app.state.aio_mongo_engine.get_collection(
-        Fingerprint
-    )
+async def curseforge_statistics(
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine),
+):
+    mod_collection = aio_mongo_engine.get_collection(Mod)
+    file_collection = aio_mongo_engine.get_collection(File)
+    fingerprint_collection = aio_mongo_engine.get_collection(Fingerprint)
 
-    mod_count = await mod_collection.aggregate([{"$collStats": {"count": {}}}]).to_list(length=None)
-    file_count = await file_collection.aggregate([{"$collStats": {"count": {}}}]).to_list(length=None)
+    mod_count = await mod_collection.aggregate([{"$collStats": {"count": {}}}]).to_list(
+        length=None
+    )
+    file_count = await file_collection.aggregate(
+        [{"$collStats": {"count": {}}}]
+    ).to_list(length=None)
     fingerprint_count = await fingerprint_collection.aggregate(
         [{"$collStats": {"count": {}}}]
     ).to_list(length=None)

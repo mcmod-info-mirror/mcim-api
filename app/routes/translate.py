@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Request, Query, Path, Body
+from fastapi import APIRouter, Depends, Query, Path, Body
 from typing import List, Optional, Annotated
 from pydantic import BaseModel, Field
-from odmantic import query
+from odmantic import query, AIOEngine
 
 
 from app.models.database.translate import ModrinthTranslation, CurseForgeTranslation
@@ -10,6 +10,7 @@ from app.utils.response import (
     TrustableResponse,
     UncachedResponse,
 )
+from app.database.mongodb import get_aio_mongodb_engine
 
 translate_router = APIRouter(prefix="/translate", tags=["translate"])
 
@@ -29,12 +30,12 @@ class ModrinthBatchRequest(BaseModel):
 )
 @cache(expire=3600 * 24)
 async def modrinth_translate_path(
-    request: Request,
     project_id: str = Path(..., description="Modrinth Project id"),
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine)
 ):
     result: Optional[
         ModrinthTranslation
-    ] = await request.app.state.aio_mongo_engine.find_one(
+    ] = await aio_mongo_engine.find_one(
         ModrinthTranslation, ModrinthTranslation.project_id == project_id
     )
 
@@ -50,10 +51,10 @@ async def modrinth_translate_path(
     response_model=List[ModrinthTranslation],
 )
 async def modrinth_translate_batch(
-    request: Request,
     project_ids: ModrinthBatchRequest = Body(..., description="Modrinth Project ids"),
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine)
 ):
-    results: List[ModrinthTranslation] = await request.app.state.aio_mongo_engine.find(
+    results: List[ModrinthTranslation] = await aio_mongo_engine.find(
         ModrinthTranslation,
         query.in_(ModrinthTranslation.project_id, project_ids.project_ids),
     )
@@ -71,12 +72,12 @@ async def modrinth_translate_batch(
 )
 @cache(expire=3600 * 24)
 async def curseforge_translate_path(
-    request: Request,
     modId: int = Path(..., description="CurseForge Mod id"),
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine)
 ):
     result: Optional[
         CurseForgeTranslation
-    ] = await request.app.state.aio_mongo_engine.find_one(
+    ] = await aio_mongo_engine.find_one(
         CurseForgeTranslation, CurseForgeTranslation.modId == modId
     )
 
@@ -92,12 +93,12 @@ async def curseforge_translate_path(
     response_model=List[CurseForgeTranslation],
 )
 async def curseforge_translate_batch(
-    request: Request,
     modIds: CurseForgeBatchRequest = Body(..., description="CurseForge Mod ids"),
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine)
 ):
     results: List[
         CurseForgeTranslation
-    ] = await request.app.state.aio_mongo_engine.find(
+    ] = await aio_mongo_engine.find(
         CurseForgeTranslation, query.in_(CurseForgeTranslation.modId, modIds.modIds)
     )
 
@@ -115,12 +116,12 @@ async def curseforge_translate_batch(
 )
 @cache(expire=3600 * 24)
 async def modrinth_translate(
-    request: Request,
     project_id: str = Query(..., description="Modrinth Project id"),
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine)
 ):
     result: Optional[
         ModrinthTranslation
-    ] = await request.app.state.aio_mongo_engine.find_one(
+    ] = await aio_mongo_engine.find_one(
         ModrinthTranslation, ModrinthTranslation.project_id == project_id
     )
 
@@ -138,12 +139,12 @@ async def modrinth_translate(
 )
 @cache(expire=3600 * 24)
 async def curseforge_translate(
-    request: Request,
     modId: int = Query(..., description="CurseForge Mod id"),
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine)
 ):
     result: Optional[
         CurseForgeTranslation
-    ] = await request.app.state.aio_mongo_engine.find_one(
+    ] = await aio_mongo_engine.find_one(
         CurseForgeTranslation, CurseForgeTranslation.modId == modId
     )
 

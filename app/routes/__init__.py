@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends
 from typing import Optional
+from odmantic import AIOEngine
+
 from app.routes.modrinth import modrinth_router
 from app.routes.curseforge import curseforge_router
 from app.routes.file_cdn import file_cdn_router
 from app.routes.translate import translate_router
 from app.config import MCIMConfig
-from app.utils.loger import log
+from app.database.mongodb import get_aio_mongodb_engine
 from app.models.database.modrinth import (
     Project as ModrinthProject,
     Version as ModrinthVersion,
@@ -34,10 +36,10 @@ root_router.include_router(translate_router)
 )
 @cache(expire=3600)
 async def mcim_statistics(
-    request: Request,
     modrinth: Optional[bool] = True,
     curseforge: Optional[bool] = True,
     file_cdn: Optional[bool] = True,
+    aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine)
 ):
     """
     全部统计信息
@@ -46,14 +48,14 @@ async def mcim_statistics(
     result = {}
 
     if curseforge:
-        curseforge_mod_collection = request.app.state.aio_mongo_engine.get_collection(
+        curseforge_mod_collection = aio_mongo_engine.get_collection(
             CurseForgeMod
         )
-        curseforge_file_collection = request.app.state.aio_mongo_engine.get_collection(
+        curseforge_file_collection = aio_mongo_engine.get_collection(
             CurseForgeFile
         )
         curseforge_fingerprint_collection = (
-            request.app.state.aio_mongo_engine.get_collection(CurseForgeFingerprint)
+            aio_mongo_engine.get_collection(CurseForgeFingerprint)
         )
 
         curseforge_mod_count = await curseforge_mod_collection.aggregate(
@@ -75,13 +77,13 @@ async def mcim_statistics(
         }
 
     if modrinth:
-        modrinth_project_collection = request.app.state.aio_mongo_engine.get_collection(
+        modrinth_project_collection = aio_mongo_engine.get_collection(
             ModrinthProject
         )
-        modrinth_version_collection = request.app.state.aio_mongo_engine.get_collection(
+        modrinth_version_collection = aio_mongo_engine.get_collection(
             ModrinthVersion
         )
-        modrinth_file_collection = request.app.state.aio_mongo_engine.get_collection(
+        modrinth_file_collection = aio_mongo_engine.get_collection(
             ModrinthFile
         )
 
@@ -102,7 +104,7 @@ async def mcim_statistics(
         }
 
     if file_cdn and mcim_config.file_cdn:
-        file_cdn_file_collection = request.app.state.aio_mongo_engine.get_collection(
+        file_cdn_file_collection = aio_mongo_engine.get_collection(
             FileCDNFile
         )
 
@@ -116,5 +118,5 @@ async def mcim_statistics(
     
     return BaseResponse(
         content=result,
-        headers={"Cache-Control": f"max-age=3600"},
+        headers={"Cache-Control": "max-age=3600"},
     )

@@ -175,7 +175,7 @@ class Mod(Model):
     thumbsUpCount: Optional[int] = None
     rating: Optional[int] = None
 
-    sync_at: datetime = Field(default_factory=datetime.utcnow)
+    sync_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     model_config = {
         "collection": "curseforge_mods",
@@ -196,7 +196,7 @@ class Fingerprint(Model):
     file: FileInfo
     latestFiles: List[FileInfo]
 
-    sync_at: datetime = Field(default_factory=datetime.utcnow)
+    sync_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     model_config = {
         "collection": "curseforge_fingerprints",
@@ -216,7 +216,7 @@ class Category(Model):
     parentCategoryId: Optional[int] = None
     displayIndex: int
 
-    sync_at: datetime = Field(default_factory=datetime.utcnow)
+    sync_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     model_config = {
         "collection": "curseforge_categories",

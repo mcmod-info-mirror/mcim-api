@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
+from odmantic import AIOEngine
 
 from app.routes.modrinth.v2 import v2_router
 from app.utils.response_cache import cache
 from app.utils.response import BaseResponse
 from app.models.database.modrinth import Project, Version, File
+from app.database.mongodb import get_aio_mongodb_engine
 
 modrinth_router = APIRouter(prefix="/modrinth", tags=["modrinth"])
 modrinth_router.include_router(v2_router)
@@ -29,14 +31,14 @@ class ModrinthStatistics(BaseModel):
     include_in_schema=False,
 )
 # @cache(expire=3600)
-async def modrinth_statistics(request: Request):
+async def modrinth_statistics(aio_mongo_engine: AIOEngine = Depends(get_aio_mongodb_engine)):
     """
     没有统计 author
     """
     # count
-    project_collection = request.app.state.aio_mongo_engine.get_collection(Project)
-    version_collection = request.app.state.aio_mongo_engine.get_collection(Version)
-    file_collection = request.app.state.aio_mongo_engine.get_collection(File)
+    project_collection = aio_mongo_engine.get_collection(Project)
+    version_collection = aio_mongo_engine.get_collection(Version)
+    file_collection = aio_mongo_engine.get_collection(File)
 
     project_count = await project_collection.aggregate([{"$collStats": {"count": {}}}]).to_list(length=None)
     version_count = await version_collection.aggregate([{"$collStats": {"count": {}}}]).to_list(length=None)
