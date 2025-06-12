@@ -39,7 +39,7 @@ async def lifespan(app: FastAPI):
     await setup_async_mongodb(aio_mongo_engine)
 
     if mcim_config.redis_cache:
-        app.state.fastapi_cache = Cache.init(enabled=True)
+        fastapi_cache = Cache.init(enabled=True)
 
     yield
 
