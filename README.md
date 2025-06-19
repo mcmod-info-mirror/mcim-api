@@ -1,14 +1,18 @@
 # mcim-api
 
-![mcim-api](https://socialify.git.ci/mcmod-info-mirror/mcim-api/image?description=1&font=Inter&issues=1&language=1&name=1&owner=1&pattern=Overlapping%20Hexagons&pulls=1&stargazers=1&theme=Auto)
+![mcim-api](https://socialify.git.ci/mcmod-info-mirror/mcim-rust-api/image?description=1&font=Inter&issues=1&language=1&name=1&owner=1&pattern=Overlapping%20Hexagons&pulls=1&stargazers=1&theme=Auto)
+
+> [!Note]
+> **预计如果顺利将迁移到 [mcim-rust-api](https://github.com/mcmod-info-mirror/mcim-rust-api)**
 
 为各平台的 Mod 的 API 缓存加速，由 [MCLF-CN #3](https://github.com/MCLF-CN/docs/issues/3) 提议，由[鸣谢列表](#鸣谢)内的各位提供支持~
 
 已缓存 **绝大多数** 的 Modrinth 和 Curseforge 上的 Minecraft Mod 信息。缓存统计信息见 [mcim-statistics](https://mod.mcimirror.top/statistics)。
 
-> [!WARNING]
-> 由于多种原因，OpenMCIM 已暂停运行，MCIM API 不受影响。文件下载已自动重定向会源站。
-> 高考完后可能后可能重制后投入使用，敬请期待。
+> [!Note]
+> 由于多种原因，OpenMCIM 已暂停运行，现在不再利用节点分发而是常规 CDN 分发，MCIM API 不受影响。
+> 
+> 文件下载已现在重定向到 [Pysio](https://github.com/pysio2007) 提供的 Cloudflare 镜像源上，见 [MCIM Download](https://mcim-files.pysio.online)。
 
 效仿 [BMCLAPI](https://bmclapidoc.bangbang93.com) ，当前 OpenMCIM 文件缓存在试运行。**急需节点加入 orz ！详情见 [OpenMCIM 文件分发相关 #91](https://github.com/mcmod-info-mirror/mcim/issues/91)**。
 
@@ -91,17 +95,18 @@ URL 参数：`modId`
 
 ## OpenMCIM
 
-> [!WARNING]
-> 由于多种原因，OpenMCIM 已暂停运行，MCIM API 不受影响。文件下载已自动重定向会源站。
-> 高考完后可能后可能重制后投入使用，敬请期待。
+> [!Note]
+> 由于多种原因，OpenMCIM 已暂停运行，现在不再利用节点分发而是常规 CDN 分发，MCIM API 不受影响。
+> 
+> 文件下载已现在重定向到 [Pysio](https://github.com/pysio2007) 提供的 Cloudflare 镜像源上，见 [MCIM Download](https://mcim-files.pysio.online)。
 
-和 [OpenBMCLAPI](https://github.com/bangbang93/openbmclapi) 需要节点分发文件，**急需节点加入 orz ！** 见 [OpenMCIM 文件分发相关 #91](https://github.com/mcmod-info-mirror/mcim/issues/91)
+~~和 [OpenBMCLAPI](https://github.com/bangbang93/openbmclapi) 一样需要节点分发文件，**急需节点加入 orz ！** 见 [OpenMCIM 文件分发相关 #91](https://github.com/mcmod-info-mirror/mcim/issues/91)~~
 
 对于启动器开发者，OpenMCIM 不会缓存**除 Mod 外**的整合包、资源包、材质包、地图等，以及文件大小大于 **20MB** 的文件，Curseforge 的类型限制为 `classId=6`，该限制会被可能根据需求更改。
 
 ## 注意事项
 
-**文件**下载可能存在一定的不稳定性，当前缺少多节点网盘的分流，建议启动器在未能成功下载的情况下才尝试使用镜像源。
+~~**文件**下载可能存在一定的不稳定性，当前缺少多节点网盘的分流，建议启动器在未能成功下载的情况下才尝试使用镜像源。~~
 
 该 API 只提供 Minecraft 相关内容，不支持 Curseforge 上的其他游戏例如 wow。
 
