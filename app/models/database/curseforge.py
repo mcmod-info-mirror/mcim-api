@@ -210,7 +210,7 @@ class Category(Model):
     slug: Optional[str] = None  # stupid curseforge dev | For id 4591 and 236, slug is None
     url: str
     iconUrl: str
-    dateModified: str
+    dateModified: datetime
     isClass: Optional[bool] = None
     classId: Optional[int] = None
     parentCategoryId: Optional[int] = None
