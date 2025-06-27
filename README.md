@@ -2,8 +2,8 @@
 
 ![mcim-api](https://socialify.git.ci/mcmod-info-mirror/mcim-rust-api/image?description=1&font=Inter&issues=1&language=1&name=1&owner=1&pattern=Overlapping%20Hexagons&pulls=1&stargazers=1&theme=Auto)
 
-> [!Note]
-> **预计如果顺利将迁移到 [mcim-rust-api](https://github.com/mcmod-info-mirror/mcim-rust-api)**
+> [!WARNING]
+> **已经重写于 [mcim-rust-api](https://github.com/mcmod-info-mirror/mcim-rust-api)**，此仓库预计不再维护，以下 README 已过时
 
 为各平台的 Mod 的 API 缓存加速，由 [MCLF-CN #3](https://github.com/MCLF-CN/docs/issues/3) 提议，由[鸣谢列表](#鸣谢)内的各位提供支持~
 
